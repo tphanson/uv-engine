@@ -1,0 +1,12 @@
+html {
+  scroll-behavior: smooth;
+  background-color: #fafafa;
+}
+
+body {
+  font-family: "Barlow";
+}
+
+*:focus {
+  outline: none !important;
+}
