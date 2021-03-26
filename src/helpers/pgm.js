@@ -1,9 +1,8 @@
+import { createCanvas } from 'canvas';
+
 class PGM {
-  constructor(fileObjectOrStringData, canvas, width = 0, height = 0) {
+  constructor(fileObjectOrStringData) {
     this.fileObjectOrStringData = fileObjectOrStringData;
-    this.canvas = canvas;
-    this.width = width;
-    this.height = height;
   }
 
   _toString = () => {
@@ -41,7 +40,8 @@ class PGM {
    * https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Pixel_manipulation_with_canvas
    */
   _drawToCanvas = (width, height, maxValue, buffer) => {
-    const ctx = this.canvas.getContext('2d');
+    const canvas = createCanvas(width, height);
+    const ctx = canvas.getContext('2d');
     let imageData = ctx.createImageData(width, height);
     for (let i = 0; i < imageData.data.length; i += 4) {
       const offset = Number(i / 4);
@@ -52,7 +52,7 @@ class PGM {
       imageData.data[i + 3] = 255;
     }
     ctx.putImageData(imageData, 0, 0);
-    return imageData;
+    return canvas;
   }
 
   draw = () => {
@@ -65,9 +65,9 @@ class PGM {
         const { format, width, height, maxValue, buffer } = data;
         if (format !== 'P5') return reject('Unsupported format. Now we only support P5 format.');
         if (buffer.length !== width * height) return reject('Unmatched data length');
-        this._drawToCanvas(width, height, maxValue, buffer);
+        const canvas = this._drawToCanvas(width, height, maxValue, buffer);
         const image = new Image();
-        image.src = this.canvas.toDataURL()
+        image.src = canvas.toDataURL();
         return resolve({ width, height, image });
       }).catch(er => {
         return reject(er);

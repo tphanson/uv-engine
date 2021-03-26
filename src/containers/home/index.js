@@ -15,7 +15,6 @@ import POI from 'components/poi';
 import styles from './styles';
 import api from 'helpers/api';
 import KOLVN from 'static/images/kolvn_office.pgm';
-import COVER from 'static/images/cover1.jpg';
 import { setError } from 'modules/ui.reducer';
 
 
@@ -24,8 +23,7 @@ class Home extends Component {
     super();
 
     this.state = {
-      x: 50,
-      y: 50,
+      trajectory: [{ x: 50, y: 50 }, { x: 50, y: 50 }],
       map: ''
     }
   }
@@ -34,8 +32,11 @@ class Home extends Component {
     this.onData();
   }
 
-  onChange = ({ x, y }) => {
-    return this.setState({ x, y });
+  onChange = (index, pos) => {
+    const { trajectory } = this.state;
+    const newTrajectory = [...trajectory];
+    newTrajectory[index] = pos
+    return this.setState({ trajectory: newTrajectory });
   }
 
   onData = () => {
@@ -49,7 +50,7 @@ class Home extends Component {
 
   render() {
     // const { classes } = this.props;
-    const { x, y, map } = this.state;
+    const { trajectory, map } = this.state;
 
     return <Grid container spacing={2} justify="center">
       <Grid item xs={11} md={10}>
@@ -60,8 +61,13 @@ class Home extends Component {
             </Typography>
           </Grid>
           <Grid item xs={12}>
-            <Map map={map} src={COVER}>
-              <POI x={x} y={y} onChange={this.onChange} />
+            <Map map={map}>
+              {trajectory.map(({ x, y }, index) => <POI
+                key={index}
+                x={x}
+                y={y}
+                onChange={pos => this.onChange(index, pos)}
+              />)}
             </Map>
           </Grid>
         </Grid>

@@ -12,16 +12,14 @@ class POI extends Component {
   }
 
   onDragEnd = (e) => {
-    const {
-      r, onChange,
-      boundary: [minX, minY, maxX, maxY],
-    } = this.props;
+    const { r, onChange, boundary: [minX, minY, maxX, maxY] } = this.props;
     const safety = r * 2;
     const position = {
       x: Math.max(Math.min(e.target.x(), maxX - safety), minX + safety),
       y: Math.max(Math.min(e.target.y(), maxY - safety), minY + safety),
     }
-    console.log(position)
+    this.ref.current.x(position.x);
+    this.ref.current.y(position.y);
     return onChange(position);
   }
 
@@ -59,7 +57,7 @@ class POI extends Component {
         this.ref.current.to({
           shadowOffsetY: 6,
           shadowBlur: 10,
-          duration: theme.transitions.duration.shorter / 1000
+          duration: theme.transitions.duration.shortest / 1000
         });
         return this.onCursor('default');
       },
@@ -68,7 +66,8 @@ class POI extends Component {
       },
       onMouseUp: () => {
         return this.onCursor('pointer');
-      }
+      },
+      onDragEnd: this.onDragEnd
     }
     return events;
   }
@@ -83,14 +82,13 @@ class POI extends Component {
       radius={r}
       {...this.onStyles()}
       {...this.onEvents()}
-      onDragEnd={this.onDragEnd}
       draggable
     />
   }
 }
 
 POI.defaultProps = {
-  r: 12,
+  r: 10,
   x: 0,
   y: 0,
   boundary: [0, 0, window.innerWidth, window.innerHeight],
