@@ -1,4 +1,4 @@
-export default theme => {
+export default function styles(theme) {
   console.log(theme);
   return {
     noWrap: {

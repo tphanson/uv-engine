@@ -13,6 +13,10 @@ import Map from 'components/map';
 import POI from 'components/poi';
 
 import styles from './styles';
+import api from 'helpers/api';
+import KOLVN from 'static/images/kolvn_office.pgm';
+import COVER from 'static/images/cover1.jpg';
+import { setError } from 'modules/ui.reducer';
 
 
 class Home extends Component {
@@ -21,17 +25,31 @@ class Home extends Component {
 
     this.state = {
       x: 50,
-      y: 50
+      y: 50,
+      map: ''
     }
+  }
+
+  componentDidMount() {
+    this.onData();
   }
 
   onChange = ({ x, y }) => {
     return this.setState({ x, y });
   }
 
+  onData = () => {
+    const { setError } = this.props;
+    return api.get(KOLVN).then(data => {
+      return this.setState({ map: data });
+    }).catch(er => {
+      return setError(er);
+    });
+  }
+
   render() {
     // const { classes } = this.props;
-    const { x, y } = this.state;
+    const { x, y, map } = this.state;
 
     return <Grid container spacing={2} justify="center">
       <Grid item xs={11} md={10}>
@@ -42,7 +60,7 @@ class Home extends Component {
             </Typography>
           </Grid>
           <Grid item xs={12}>
-            <Map>
+            <Map map={map} src={COVER}>
               <POI x={x} y={y} onChange={this.onChange} />
             </Map>
           </Grid>
@@ -57,6 +75,7 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => bindActionCreators({
+  setError,
 }, dispatch);
 
 export default withRouter(connect(

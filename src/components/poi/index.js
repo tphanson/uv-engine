@@ -8,21 +8,27 @@ class POI extends Component {
   constructor() {
     super();
 
-    this.state = {
-      isDragging: false,
-    }
     this.ref = createRef();
   }
 
-  onDragStart = () => {
-    return this.setState({ isDragging: true });
+  onDragEnd = (e) => {
+    const {
+      r, onChange,
+      boundary: [minX, minY, maxX, maxY],
+    } = this.props;
+    const safety = r * 2;
+    const position = {
+      x: Math.max(Math.min(e.target.x(), maxX - safety), minX + safety),
+      y: Math.max(Math.min(e.target.y(), maxY - safety), minY + safety),
+    }
+    console.log(position)
+    return onChange(position);
   }
 
-  onDragEnd = (e) => {
-    const { onChange } = this.props;
-    return this.setState({ isDragging: false }, () => {
-      return onChange({ x: e.target.x(), y: e.target.y() });
-    });
+  onCursor = (type) => {
+    const types = ['default', 'pointer', 'move'];
+    if (!types.includes(type)) type = 'default';
+    window.document.body.style.cursor = type;
   }
 
   onStyles = () => {
@@ -31,7 +37,7 @@ class POI extends Component {
       fill: theme.palette.primary.main,
       shadowColor: theme.palette.primary.main,
       shadowOffsetX: 0,
-      shadowOffsetY: 7,
+      shadowOffsetY: 6,
       shadowBlur: 10,
       shadowOpacity: 0.9,
     }
@@ -39,26 +45,29 @@ class POI extends Component {
   }
 
   onEvents = () => {
-    const { theme, setCursor } = this.props;
+    const { theme } = this.props;
     const events = {
       onMouseEnter: () => {
-        setCursor('pointer');
-        return this.ref.current.to({
+        this.ref.current.to({
           shadowOffsetY: 10,
           shadowBlur: 20,
           duration: theme.transitions.duration.shorter / 1000
         });
+        return this.onCursor('pointer');
       },
       onMouseLeave: () => {
-        setCursor('default');
-        return this.ref.current.to({
-          shadowOffsetY: 7,
+        this.ref.current.to({
+          shadowOffsetY: 6,
           shadowBlur: 10,
           duration: theme.transitions.duration.shorter / 1000
         });
+        return this.onCursor('default');
       },
       onMouseDown: () => {
-        setCursor('move');
+        return this.onCursor('move');
+      },
+      onMouseUp: () => {
+        return this.onCursor('pointer');
       }
     }
     return events;
@@ -74,6 +83,7 @@ class POI extends Component {
       radius={r}
       {...this.onStyles()}
       {...this.onEvents()}
+      onDragEnd={this.onDragEnd}
       draggable
     />
   }
@@ -83,6 +93,7 @@ POI.defaultProps = {
   r: 12,
   x: 0,
   y: 0,
+  boundary: [0, 0, window.innerWidth, window.innerHeight],
   onChange: () => { }
 }
 
@@ -90,6 +101,7 @@ POI.propTypes = {
   r: PropTypes.number,
   x: PropTypes.number,
   y: PropTypes.number,
+  boundary: PropTypes.array,
   onChange: PropTypes.func
 }
 
