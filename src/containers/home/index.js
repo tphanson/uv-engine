@@ -16,6 +16,7 @@ import { SettingsRounded } from '@material-ui/icons';
 import Map from 'components/map';
 import POI from 'components/poi';
 import Point from 'components/point';
+import Bot from 'components/bot';
 import CircularProgressWithLabel from 'components/progress';
 
 import styles from './styles';
@@ -134,6 +135,11 @@ class Home extends Component {
           </Grid>
           <Grid item xs={12}>
             <Map map={map}>
+              <Bot
+                x={500}
+                y={350}
+                r={width / 150}
+              />
               {trajectory.map(({ x, y, editable }, index) => {
                 if (editable) return <POI
                   key={index}
@@ -211,7 +217,7 @@ class Home extends Component {
                           variant="determinate"
                           onChange={this.onTime}
                           value={selectedNode.t * 100 / 600000}
-                          label={`${utils.prettyNumber(selectedNode.t / 60000)}`}
+                          label={`${utils.prettyNumber(selectedNode.t / 60000)}'`}
                         />
                       </Grid>
                     </Grid>
@@ -226,7 +232,7 @@ class Home extends Component {
                           variant="determinate"
                           onChange={this.onVelocity}
                           value={selectedNode.v * 100 / 3}
-                          label={`${utils.prettyNumber(selectedNode.v)}`}
+                          label={`${utils.prettyNumber(selectedNode.v)} m/s`}
                         />
                       </Grid>
                     </Grid>

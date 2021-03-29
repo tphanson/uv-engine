@@ -29,7 +29,7 @@ function CircularProgressWithLabel(props) {
         alignItems="center"
         justifyContent="center"
       >
-        <Typography variant="caption" component="div" color="textSecondary">{label}</Typography>
+        <Typography variant="caption" align="center">{label}</Typography>
       </Box>
     </Box>
   );
