@@ -1,4 +1,3 @@
-
 import React, { Component, createRef } from 'react';
 import PropTypes from 'prop-types';
 import { Circle } from 'react-konva';
@@ -9,6 +8,23 @@ class POI extends Component {
     super();
 
     this.ref = createRef();
+  }
+
+  componentDidMount() {
+    return this.setInfo();
+  }
+
+  componentDidUpdate(prevProps) {
+    const { x: prevX, y: prevY, r: prevR } = prevProps;
+    const { x, y, r } = this.props;
+    if (x !== prevX || y !== prevY || r !== prevR) this.setInfo();
+  }
+
+  setInfo = () => {
+    const { x, y, r } = this.props;
+    this.ref.current.x(x);
+    this.ref.current.y(y);
+    this.ref.current.radius(r);
   }
 
   onDragEnd = (e) => {
@@ -43,7 +59,7 @@ class POI extends Component {
   }
 
   onEvents = () => {
-    const { theme } = this.props;
+    const { theme, onClick } = this.props;
     const events = {
       onMouseEnter: () => {
         this.ref.current.to({
@@ -66,6 +82,9 @@ class POI extends Component {
       },
       onMouseUp: () => {
         return this.onCursor('pointer');
+      },
+      onClick: (e) => {
+        return onClick(e);
       },
       onDragEnd: this.onDragEnd
     }
@@ -92,7 +111,8 @@ POI.defaultProps = {
   x: 0,
   y: 0,
   boundary: [0, 0, window.innerWidth, window.innerHeight],
-  onChange: () => { }
+  onClick: () => { },
+  onChange: () => { },
 }
 
 POI.propTypes = {
@@ -100,7 +120,8 @@ POI.propTypes = {
   x: PropTypes.number,
   y: PropTypes.number,
   boundary: PropTypes.array,
-  onChange: PropTypes.func
+  onClick: PropTypes.func,
+  onChange: PropTypes.func,
 }
 
 export default POI;

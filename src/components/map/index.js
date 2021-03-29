@@ -20,6 +20,7 @@ class Map extends Component {
     super();
 
     this.state = {
+      wide: 0,
       ratio: 1,
     }
 
@@ -28,6 +29,7 @@ class Map extends Component {
   }
 
   componentDidMount() {
+    this.onLoadContainer();
     this.onLoadMap();
   }
 
@@ -37,6 +39,12 @@ class Map extends Component {
     if (!isEqual(map, prevMap)) this.onLoadMap();
   }
 
+  onLoadContainer = () => {
+    const { theme } = this.props;
+    const container = window.document.getElementById('container');
+    const wide = container.offsetWidth - theme.spacing(2);
+    return this.setState({ wide });
+  }
 
   onLoadMap = () => {
     const { map } = this.props;
@@ -82,23 +90,59 @@ class Map extends Component {
     layer.batchDraw();
   }
 
+  onStyles = () => {
+    const { theme } = this.props;
+    const styles = {
+      shadowColor: theme.palette.grey[400],
+      shadowOffsetX: 0,
+      shadowOffsetY: 6,
+      shadowBlur: 10,
+      shadowOpacity: 0.9,
+    }
+    return styles;
+  }
+
+  onEvents = () => {
+    const { theme } = this.props;
+    const events = {
+      onMouseEnter: () => {
+        return this.map.current.to({
+          shadowOffsetY: 10,
+          shadowBlur: 20,
+          duration: theme.transitions.duration.shorter / 1000
+        });
+      },
+      onMouseLeave: () => {
+        return this.map.current.to({
+          shadowOffsetY: 6,
+          shadowBlur: 10,
+          duration: theme.transitions.duration.shortest / 1000
+        });
+      },
+    }
+    return events;
+  }
+
   render() {
     // const { classes } = this.props;
     const { children, theme } = this.props;
-    const { ratio } = this.state;
-
-    const container = window.document.getElementById('container') || {};
-    const wide = container.offsetWidth - theme.spacing(2);
+    const { ratio, wide } = this.state;
     const boundary = [0, 0, wide, wide / ratio];
 
     return <Grid container spacing={2} onScroll={this.onScroll}>
       <Grid item xs={12} id="container">
-        <Stage width={wide} height={wide / ratio} onWheel={this.onZoom} >
+        {wide ? <Stage width={wide} height={wide / ratio} onWheel={this.onZoom} >
           <Layer ref={this.layer} draggable>
-            <Image ref={this.map} width={wide} height={wide / ratio} />
+            <Image
+              ref={this.map}
+              width={wide}
+              height={wide / ratio}
+              {...this.onStyles()}
+              {...this.onEvents()}
+            />
             {Children.map(children, child => cloneElement(child, { theme, boundary }))}
           </Layer>
-        </Stage>
+        </Stage> : null}
       </Grid>
     </Grid>
   }
