@@ -73,21 +73,47 @@ class Map extends Component {
     if (newScale < scaleBy) newScale = 1;
     layer.scale({ x: newScale, y: newScale });
     // New position
-    let newPosition = oldPosition;
-    if (e.evt.deltaY >= 0) {
-      if (oldScale !== 1) newPosition = {
-        x: oldPosition.x / (oldScale - 1) * (newScale - 1),
-        y: oldPosition.y / (oldScale - 1) * (newScale - 1),
+    const { wide, ratio } = this.state;
+    const origin = { x: wide / 2, y: wide / ratio / 2 }
+    const oldCentroid = {
+      x: wide * oldScale / 2 + oldPosition.x,
+      y: wide / ratio * oldScale / 2 + oldPosition.y
+    }
+    let newCentroid = oldCentroid;
+    if (newScale === 1) {
+      newCentroid = origin;
+    }
+    if (oldScale !== 1) {
+      const deltaX = (oldCentroid.x - origin.x) / (oldScale - 1);
+      const deltaY = (oldCentroid.y - origin.y) / (oldScale - 1);
+      newCentroid = {
+        x: deltaX * (newScale - 1) + origin.x,
+        y: deltaY * (newScale - 1) + origin.y
       }
-      else newPosition = {
-        x: oldPosition.x / 2,
-        y: oldPosition.y / 2,
-      }
-      if (newPosition.x < 10 || newPosition.y < 10) newPosition = { x: 0, y: 0 }
+    }
+    const boundaryX = (newScale - 1) * wide / 2;
+    const boundaryY = (newScale - 1) * wide / ratio / 2;
+    newCentroid.x = Math.max(origin.x - boundaryX, Math.min(origin.x + boundaryX, newCentroid.x));
+    newCentroid.y = Math.max(origin.y - boundaryY, Math.min(origin.y + boundaryY, newCentroid.y));
+    const newPosition = {
+      x: newCentroid.x - wide * newScale / 2,
+      y: newCentroid.y - wide / ratio * newScale / 2,
     }
     layer.position(newPosition);
     // Render
     layer.batchDraw();
+  }
+
+  onDragEnd = (e) => {
+    const { wide, ratio } = this.state;
+    const scale = this.layer.current.scaleX();
+    const minX = wide * (1 - scale);
+    const minY = wide / ratio * (1 - scale);
+    const newPosition = {
+      x: Math.min(0, Math.max(minX, e.target.x())),
+      y: Math.min(0, Math.max(minY, e.target.y())),
+    }
+    this.layer.current.position(newPosition);
   }
 
   onStyles = () => {
@@ -132,7 +158,7 @@ class Map extends Component {
     return <Grid container spacing={2} onScroll={this.onScroll}>
       <Grid item xs={12} id="container">
         {wide ? <Stage width={wide} height={wide / ratio} onWheel={this.onZoom} >
-          <Layer ref={this.layer} draggable>
+          <Layer ref={this.layer} draggable onDragEnd={this.onDragEnd}>
             <Image
               ref={this.map}
               width={wide}

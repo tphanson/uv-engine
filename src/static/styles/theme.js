@@ -13,6 +13,16 @@ const theme = createMuiTheme({
   typography: {
     fontFamily: 'Raleway',
     fontSize: 12,
+    h1: { fontWeight: 300, textTransform: 'None' },
+    h2: { fontWeight: 700, textTransform: 'None' },
+    h3: { fontWeight: 300, textTransform: 'None' },
+    h4: { fontWeight: 700, textTransform: 'None' },
+    h5: { fontWeight: 300, textTransform: 'None' },
+    h6: { fontWeight: 700, textTransform: 'None' },
+    subtitle1: { fontWeight: 300, textTransform: 'None' },
+    subtitle2: { fontWeight: 700, textTransform: 'None' },
+    body1: { fontWeight: 300, textTransform: 'None' },
+    body2: { fontWeight: 700, textTransform: 'None' },
   },
   // shadows: [
   //   'none',
