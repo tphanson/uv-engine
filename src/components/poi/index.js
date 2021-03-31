@@ -14,28 +14,25 @@ class POI extends Component {
     return this.setInfo();
   }
 
-  componentDidUpdate(prevProps) {
-    const { x: prevX, y: prevY, r: prevR } = prevProps;
-    const { x, y, r } = this.props;
-    if (x !== prevX || y !== prevY || r !== prevR) this.setInfo();
-  }
-
   setInfo = () => {
-    const { x, y, r } = this.props;
-    this.ref.current.x(x);
-    this.ref.current.y(y);
+    const { x, y, r, transform } = this.props;
+    this.ref.current.x(transform({ x, y }).x);
+    this.ref.current.y(transform({ x, y }).y);
     this.ref.current.radius(r);
   }
 
   onDragEnd = (e) => {
-    const { r, onChange, boundary: [minX, minY, maxX, maxY] } = this.props;
+    e.evt.preventDefault();
+    const { r, onChange, boundary: [minX, minY, maxX, maxY], inverseTransform } = this.props;
     const safety = r * 2;
+    const x = Math.max(Math.min(e.target.x(), maxX - safety), minX + safety);
+    const y = Math.max(Math.min(e.target.y(), maxY - safety), minY + safety);
+    this.ref.current.x(x);
+    this.ref.current.y(y);
     const position = {
-      x: Math.max(Math.min(e.target.x(), maxX - safety), minX + safety),
-      y: Math.max(Math.min(e.target.y(), maxY - safety), minY + safety),
+      x: inverseTransform({ x, y }).x,
+      y: inverseTransform({ x, y }).y,
     }
-    this.ref.current.x(position.x);
-    this.ref.current.y(position.y);
     return onChange(position);
   }
 
@@ -92,12 +89,12 @@ class POI extends Component {
   }
 
   render() {
-    const { x, y, r } = this.props;
+    const { x, y, r, transform } = this.props;
 
     return <Circle
       ref={this.ref}
-      x={x}
-      y={y}
+      x={transform({ x, y }).x}
+      y={transform({ x, y }).y}
       radius={r}
       {...this.onStyles()}
       {...this.onEvents()}
@@ -113,6 +110,8 @@ POI.defaultProps = {
   boundary: [0, 0, window.innerWidth, window.innerHeight],
   onClick: () => { },
   onChange: () => { },
+  transform: () => ({ x: 0, y: 0 }),
+  inverseTransform: () => ({ x: 0, y: 0 }),
 }
 
 POI.propTypes = {
@@ -122,6 +121,8 @@ POI.propTypes = {
   boundary: PropTypes.array,
   onClick: PropTypes.func,
   onChange: PropTypes.func,
+  transform: PropTypes.func,
+  inverseTransform: PropTypes.func,
 }
 
 export default POI;

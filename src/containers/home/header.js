@@ -7,12 +7,12 @@ import Typography from '@material-ui/core/Typography';
 import Paper from '@material-ui/core/Paper';
 import ButtonGroup from '@material-ui/core/ButtonGroup';
 import Button from '@material-ui/core/Button';
-import Image from 'material-ui-image';
 
 import { UndoRounded, RedoRounded } from '@material-ui/icons';
 
+import Logo from 'components/logo';
+
 import styles from './styles';
-import logo from 'static/images/logo.png';
 
 
 class Header extends Component {
@@ -26,11 +26,7 @@ class Header extends Component {
         <Paper className={classes.paper} elevation={3}>
           <Grid container spacing={2} className={classes.noWrap} justify="space-between" alignItems="center">
             <Grid item xs={4}>
-              <Grid container spacing={2}>
-                <Grid item className={classes.logo} >
-                  <Image src={logo} aspectRatio={300 / 177} />
-                </Grid>
-              </Grid>
+              <Logo />
             </Grid>
             <Grid item xs={4}>
               <Typography variant="h6" align="center">UV Engine</Typography>
@@ -49,7 +45,7 @@ class Header extends Component {
                 </Grid>
                 <Grid item>
                   <Button variant="contained" color="primary" onClick={onSave}>
-                    <Typography>Save</Typography>
+                    <Typography style={{ color: '#ffffff' }} variant="body2">Save</Typography>
                   </Button>
                 </Grid>
               </Grid>

@@ -1,5 +1,33 @@
 import { createCanvas } from 'canvas';
 
+
+
+/**
+ * Pixels manipulation
+ * https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Pixel_manipulation_with_canvas
+ */
+export function drawToCanvas(width, height, maxValue, buffer) {
+  const canvas = createCanvas(width, height);
+  const ctx = canvas.getContext('2d');
+  let imageData = ctx.createImageData(width, height);
+  for (let i = 0; i < imageData.data.length; i += 4) {
+    const offset = Number(i / 4);
+    const value = Number(255 - buffer[offset] / maxValue * 255); // Inverse color
+    imageData.data[i] = value;
+    imageData.data[i + 1] = value;
+    imageData.data[i + 2] = value;
+    imageData.data[i + 3] = buffer[offset] >= 0 ? 255 : 0;
+  }
+  ctx.putImageData(imageData, 0, 0);
+  return canvas;
+}
+
+export function canvas2Image(canvas) {
+  const image = new Image();
+  image.src = canvas.toDataURL();
+  return image;
+}
+
 class PGM {
   constructor(fileObjectOrStringData) {
     this.fileObjectOrStringData = fileObjectOrStringData;
@@ -35,26 +63,6 @@ class PGM {
     return { format, width, height, maxValue, buffer };
   }
 
-  /**
-   * Pixels manipulation
-   * https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Pixel_manipulation_with_canvas
-   */
-  _drawToCanvas = (width, height, maxValue, buffer) => {
-    const canvas = createCanvas(width, height);
-    const ctx = canvas.getContext('2d');
-    let imageData = ctx.createImageData(width, height);
-    for (let i = 0; i < imageData.data.length; i += 4) {
-      const offset = Number(i / 4);
-      const value = Number(buffer[offset] / maxValue * 255)
-      imageData.data[i] = value;
-      imageData.data[i + 1] = value;
-      imageData.data[i + 2] = value;
-      imageData.data[i + 3] = 255;
-    }
-    ctx.putImageData(imageData, 0, 0);
-    return canvas;
-  }
-
   draw = () => {
     return new Promise((resolve, reject) => {
       return this._toString().then(re => {
@@ -65,9 +73,8 @@ class PGM {
         const { format, width, height, maxValue, buffer } = data;
         if (format !== 'P5') return reject('Unsupported format. Now we only support P5 format.');
         if (buffer.length !== width * height) return reject('Unmatched data length');
-        const canvas = this._drawToCanvas(width, height, maxValue, buffer);
-        const image = new Image();
-        image.src = canvas.toDataURL();
+        const canvas = drawToCanvas(width, height, maxValue, buffer);
+        const image = canvas2Image(canvas);
         return resolve({ width, height, image });
       }).catch(er => {
         return reject(er);

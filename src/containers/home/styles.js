@@ -17,10 +17,5 @@ export default function styles(theme) {
         boxShadow: theme.shadows[6],
       },
     },
-    logo:{
-      width: theme.spacing(12),
-      padding: 0,
-      margin: -theme.spacing(1)
-    }
   }
 }

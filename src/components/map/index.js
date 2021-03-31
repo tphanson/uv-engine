@@ -5,13 +5,12 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { withRouter } from 'react-router-dom';
 import isEqual from 'react-fast-compare';
-import { Stage, Layer, Image } from 'react-konva';
+import { Stage, Layer, Image, Arrow } from 'react-konva';
 
 import { withStyles, withTheme } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 
 import styles from './styles';
-import PGM from 'helpers/pgm';
 import { setError } from 'modules/ui.reducer';
 
 
@@ -22,6 +21,8 @@ class Map extends Component {
     this.state = {
       wide: 0,
       ratio: 1,
+      origin: {},
+      resolution: 0.5
     }
 
     this.layer = createRef();
@@ -39,24 +40,43 @@ class Map extends Component {
     if (!isEqual(map, prevMap)) this.onLoadMap();
   }
 
+  transform = ({ x, y }) => {
+    const { map } = this.props;
+    const { wide, ratio } = this.state;
+    if (!map || !map.width || !wide) return { x: 0, y: 0 }
+    const { width, height, origin, resolution } = map;
+    return {
+      x: ((x - origin.x) * wide) / (resolution * width),
+      y: ((y - origin.y) * wide) / (resolution * height * ratio)
+    }
+  }
+
+  inverseTransform = ({ x, y }) => {
+    const { map } = this.props;
+    const { wide, ratio } = this.state;
+    if (!map || !map.width || !wide) return { x: 0, y: 0 }
+    const { width, height, origin, resolution } = map;
+    return {
+      x: x * resolution * width / wide + origin.x,
+      y: y * resolution * height * ratio / wide + origin.y
+    }
+  }
+
   onLoadContainer = () => {
     const { theme } = this.props;
     const container = window.document.getElementById('container');
     const wide = container.offsetWidth - theme.spacing(2);
-    return this.setState({ wide });
+    return this.setState({ wide }, this.onLoadMap);
   }
 
   onLoadMap = () => {
     const { map } = this.props;
-    if (!map) return;
-    const pgm = new PGM(map);
-    return pgm.draw().then(({ width, height, image }) => {
-      const ratio = width / height;
-      return this.setState({ ratio }, () => {
-        this.map.current.image(image);
-      });
-    }).catch(er => {
-      return setError(er);
+    const { wide } = this.state;
+    if (!map || !map.width || !wide) return;
+    const { width, height, image, origin, resolution } = map;
+    const ratio = width / height;
+    return this.setState({ ratio, origin, resolution }, () => {
+      this.map.current.image(image);
     });
   }
 
@@ -110,8 +130,8 @@ class Map extends Component {
     const minX = wide * (1 - scale);
     const minY = wide / ratio * (1 - scale);
     const newPosition = {
-      x: Math.min(0, Math.max(minX, e.target.x())),
-      y: Math.min(0, Math.max(minY, e.target.y())),
+      x: Math.min(0, Math.max(minX, this.layer.current.x())),
+      y: Math.min(0, Math.max(minY, this.layer.current.y())),
     }
     this.layer.current.position(newPosition);
   }
@@ -126,27 +146,6 @@ class Map extends Component {
       shadowOpacity: 0.9,
     }
     return styles;
-  }
-
-  onEvents = () => {
-    const { theme } = this.props;
-    const events = {
-      onMouseEnter: () => {
-        return this.map.current.to({
-          shadowOffsetY: 10,
-          shadowBlur: 20,
-          duration: theme.transitions.duration.shorter / 1000
-        });
-      },
-      onMouseLeave: () => {
-        return this.map.current.to({
-          shadowOffsetY: 6,
-          shadowBlur: 10,
-          duration: theme.transitions.duration.shortest / 1000
-        });
-      },
-    }
-    return events;
   }
 
   render() {
@@ -164,9 +163,35 @@ class Map extends Component {
               width={wide}
               height={wide / ratio}
               {...this.onStyles()}
-              {...this.onEvents()}
             />
-            {Children.map(children, child => cloneElement(child, { theme, boundary }))}
+            <Arrow
+              x={this.transform({ x: 0, y: 0 }).x}
+              y={this.transform({ x: 0, y: 0 }).y}
+              points={[0, 0, 0, 20]}
+              fill={theme.palette.grey[400]}
+              pointerLength={2}
+              pointerWidth={2}
+              stroke={theme.palette.grey[400]}
+              strokeWidth={2}
+              lineJoin="round"
+            />
+            <Arrow
+              x={this.transform({ x: 0, y: 0 }).x}
+              y={this.transform({ x: 0, y: 0 }).y}
+              points={[0, 0, 20, 0]}
+              fill={theme.palette.grey[400]}
+              pointerLength={2}
+              pointerWidth={2}
+              stroke={theme.palette.grey[400]}
+              strokeWidth={2}
+              lineJoin="round"
+            />
+            {Children.map(children, child => cloneElement(child, {
+              theme,
+              boundary,
+              transform: this.transform,
+              inverseTransform: this.inverseTransform
+            }))}
           </Layer>
         </Stage> : null}
       </Grid>
@@ -180,7 +205,7 @@ Map.defaultProps = {
 }
 
 Map.propTypes = {
-  map: PropTypes.string.isRequired,
+  map: PropTypes.object.isRequired,
   onChange: PropTypes.func
 }
 

@@ -13,17 +13,10 @@ class Point extends Component {
   componentDidMount() {
     return this.setInfo();
   }
-
-  componentDidUpdate(prevProps) {
-    const { x: prevX, y: prevY, r: prevR } = prevProps;
-    const { x, y, r } = this.props;
-    if (x !== prevX || y !== prevY || r !== prevR) this.setInfo();
-  }
-
   setInfo = () => {
-    const { x, y, r } = this.props;
-    this.ref.current.x(x);
-    this.ref.current.y(y);
+    const { x, y, r, transform } = this.props;
+    this.ref.current.x(transform({ x, y }).x);
+    this.ref.current.y(transform({ x, y }).y);
     this.ref.current.radius(r);
   }
 
@@ -58,12 +51,12 @@ class Point extends Component {
   }
 
   render() {
-    const { x, y, r } = this.props;
+    const { x, y, transform, r } = this.props;
 
     return <Circle
       ref={this.ref}
-      x={x}
-      y={y}
+      x={transform({ x, y }).x}
+      y={transform({ x, y }).y}
       radius={r}
       {...this.onStyles()}
       {...this.onEvents()}
@@ -75,7 +68,9 @@ Point.defaultProps = {
   r: 10,
   x: 0,
   y: 0,
-  onClick: () => { }
+  onClick: () => { },
+  transform: () => ({ x: 0, y: 0 }),
+  inverseTransform: () => ({ x: 0, y: 0 }),
 }
 
 Point.propTypes = {
@@ -83,6 +78,8 @@ Point.propTypes = {
   x: PropTypes.number,
   y: PropTypes.number,
   onClick: PropTypes.func,
+  transform: PropTypes.func,
+  inverseTransform: PropTypes.func,
 }
 
 export default Point;

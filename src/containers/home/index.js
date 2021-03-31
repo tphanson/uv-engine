@@ -1,7 +1,8 @@
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { withRouter } from 'react-router-dom';
+import qte from 'quaternion-to-euler';
 
 import { withStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
@@ -18,46 +19,76 @@ import Action, { virtualEl } from './action';
 
 import styles from './styles';
 import History from 'helpers/history';
-import api from 'helpers/api';
-import utils from 'helpers/utils';
-import KOLVN from 'static/images/kolvn_office.pgm';
+import ROS from 'helpers/ros';
+import { drawToCanvas, canvas2Image } from 'helpers/pgm';
 import { setError } from 'modules/ui.reducer';
 
+
+const EMPTY_NODE = { orientation: {}, position: {}, metadata: {} }
 
 class Home extends Component {
   constructor() {
     super();
 
-    const DATA = [
-      { x: 50, y: 50, editable: true, t: 60000, v: 0.5, l: 500 },
-      { x: 100, y: 100, editable: false, t: 0, v: 0, l: 0 },
-      { x: 150, y: 150, editable: false, t: 0, v: 0, l: 0 },
-      { x: 200, y: 200, editable: false, t: 0, v: 0, l: 0 },
-      { x: 250, y: 250, editable: false, t: 0, v: 0, l: 0 },
-      { x: 300, y: 300, editable: true, t: 120000, v: 0.1, l: 1000 },
-      { x: 350, y: 350, editable: false, t: 0, v: 0, l: 0 },
-      { x: 400, y: 400, editable: false, t: 0, v: 0, l: 0 },
-      { x: 450, y: 450, editable: false, t: 0, v: 0, l: 0 },
-      { x: 500, y: 500, editable: false, t: 0, v: 0, l: 0 },
-      { x: 550, y: 550, editable: true, t: 45000, v: 2, l: 5000 }
-    ]
-
     this.state = {
       anchorEl: virtualEl(),
       selected: -1,
-      trajectory: DATA,
-      map: '',
-      disabled: {}
+      trajectory: [],
+      map: {},
+      bot: {},
+      disabled: {
+        disabledUndo: true,
+        disabledRedo: true,
+      }
     }
 
-    this.history = new History(DATA);
+    this.history = new History([]);
   }
 
   componentDidMount() {
-    this.onData();
     this.history.watch(disabled => {
       return this.setState({ disabled });
     });
+
+    const ros = new ROS('ws://192.168.123.15:9090');
+    // Map
+    this.unsubscribeMap = ros.map(msg => {
+      console.log(msg)
+      const {
+        data,
+        info: { width, height, resolution, origin: { position: { x, y } } }
+      } = msg;
+      const origin = { x, y }
+      const canvas = drawToCanvas(width, height, 100, data);
+      const image = canvas2Image(canvas);
+      const map = { width, height, image, origin, resolution }
+      return this.setState({ map });
+    });
+    // Bot
+    this.unsubscribeBot = ros.bot(msg => {
+      const { pose: { position: { x, y }, orientation } } = msg;
+      // Compute bot rotation
+      const quaternion = [orientation.x, orientation.y, orientation.z, orientation.w];
+      const [yaw] = qte(quaternion);
+      // Normalize bot position
+      const bot = { x, y, yaw }
+      return this.setState({ bot });
+    });
+    // Path
+    this.unsubscribePath = ros.path(msg => {
+      const { poses } = msg;
+      const trajectory = poses.map(pose => {
+        const metadata = { editable: false, t: 0, v: 0, l: 0 }
+        return { ...pose, metadata }
+      }).filter((pose, index) => (index % 3 === 0)); // Reduce density
+      return this.setState({ trajectory });
+    });
+  }
+
+  componentWillUnmount() {
+    this.unsubscribeMap();
+    this.unsubscribeBot();
+    this.unsubscribePath();
   }
 
   onHistory = () => {
@@ -78,17 +109,8 @@ class Home extends Component {
   onChange = (index, pos) => {
     const { trajectory } = this.state;
     const newTrajectory = [...trajectory];
-    newTrajectory[index] = { ...newTrajectory[index], ...pos }
+    newTrajectory[index].position = { ...newTrajectory[index].position, ...pos }
     return this.setState({ trajectory: newTrajectory }, this.onHistory);
-  }
-
-  onData = () => {
-    const { setError } = this.props;
-    return api.get(KOLVN).then(data => {
-      return this.setState({ map: data });
-    }).catch(er => {
-      return setError(er);
-    });
   }
 
   onClick = (e, index) => {
@@ -105,38 +127,36 @@ class Home extends Component {
   onSwitch = (editable) => {
     const { trajectory, selected } = this.state;
     const newTrajectory = [...trajectory];
-    newTrajectory[selected] = { ...newTrajectory[selected], editable }
+    newTrajectory[selected].metadata = { ...newTrajectory[selected].metadata, editable }
     return this.setState({ trajectory: newTrajectory }, this.onHistory);
   }
 
   onTime = (t) => {
     const { trajectory, selected } = this.state;
     const newTrajectory = [...trajectory];
-    newTrajectory[selected] = { ...newTrajectory[selected], t }
+    newTrajectory[selected].metadata = { ...newTrajectory[selected].metadata, t }
     return this.setState({ trajectory: newTrajectory }, this.onHistory);
   }
 
   onVelocity = (v) => {
     const { trajectory, selected } = this.state;
     const newTrajectory = [...trajectory];
-    newTrajectory[selected] = { ...newTrajectory[selected], v }
+    newTrajectory[selected].metadata = { ...newTrajectory[selected].metadata, v }
     return this.setState({ trajectory: newTrajectory }, this.onHistory);
   }
 
   onLightAmptitude = (l) => {
     const { trajectory, selected } = this.state;
     const newTrajectory = [...trajectory];
-    newTrajectory[selected] = { ...newTrajectory[selected], l }
+    newTrajectory[selected].metadata = { ...newTrajectory[selected].metadata, l }
     return this.setState({ trajectory: newTrajectory }, this.onHistory);
   }
 
   render() {
     const { ui: { width } } = this.props;
-    const { trajectory, map, anchorEl, selected, disabled } = this.state;
+    const { trajectory, map, bot, anchorEl, selected, disabled } = this.state;
 
-    const selectedNode = trajectory[selected] || {
-      editable: false
-    }
+    const selectedNode = trajectory[selected] || { ...EMPTY_NODE }
 
     return <Grid container spacing={2} justify="center">
       <Grid item xs={11} md={10}>
@@ -154,8 +174,11 @@ class Home extends Component {
           </Grid>
           <Grid item xs={12}>
             <Map map={map}>
-              <Bot x={500} y={350} r={width / 150} />
-              {trajectory.map(({ x, y, editable }, index) => {
+              <Bot {...bot} r={width / 150} />
+              {trajectory.map(({
+                position: { x, y },
+                metadata: { editable }
+              }, index) => {
                 if (editable) return <POI
                   key={index}
                   x={x}
@@ -168,7 +191,7 @@ class Home extends Component {
                   key={index}
                   x={x}
                   y={y}
-                  r={width / 300}
+                  r={width / 500}
                   onClick={(e) => this.onClick(e, index)}
                 />
               })}
@@ -176,12 +199,12 @@ class Home extends Component {
           </Grid>
           <Action
             anchorEl={anchorEl}
-            editable={selectedNode.editable}
-            x={selectedNode.x}
-            y={selectedNode.y}
-            time={selectedNode.t}
-            velocity={selectedNode.v}
-            light={selectedNode.l}
+            editable={selectedNode.metadata.editable}
+            x={selectedNode.position.x}
+            y={selectedNode.position.y}
+            time={selectedNode.metadata.t}
+            velocity={selectedNode.metadata.v}
+            light={selectedNode.metadata.l}
             onClose={this.onClose}
             onSwitch={this.onSwitch}
             onTime={this.onTime}

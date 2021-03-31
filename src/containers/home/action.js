@@ -23,11 +23,15 @@ export function virtualEl(x = 0, y = 0) {
     open: Boolean(x || y),
     clientWidth: 0, clientHeight: 0,
     getBoundingClientRect: () => ({
-      width: 0, height: 0,
+      width: 400, height: 400,
       top: y, right: x, bottom: y, left: x
     }),
   }
 }
+
+const MAX_TIME = 600000;
+const MAX_VELOCITY = 3;
+const MAX_LIGHT = 10000;
 
 class Action extends Component {
   constructor() {
@@ -53,25 +57,36 @@ class Action extends Component {
   }
 
   onTime = (value) => {
-    const time = 600000 * value / 100;
+    const time = MAX_TIME * value / 100;
     return this.props.onTime(time);
   }
 
   onVelocity = (value) => {
-    const velocity = 3 * value / 100;
+    const velocity = MAX_VELOCITY * value / 100;
     return this.props.onVelocity(velocity);
   }
 
   onLightAmptitude = (value) => {
-    const light = 10000 * value / 100;
+    const light = MAX_LIGHT * value / 100;
     return this.props.onLightAmptitude(light);
+  }
+
+  onClose = () => {
+    const { onClose } = this.props;
+    window.document.body.style.overflowY = 'auto';
+    return onClose();
   }
 
   render() {
     const { classes } = this.props;
-    const { anchorEl, editable, x, y, time, velocity, light, onClose } = this.props;
+    const { anchorEl, editable, x, y, time, velocity, light } = this.props;
 
-    return <Popper open={anchorEl.open} anchorEl={anchorEl}>
+    return <Popper
+      open={anchorEl.open}
+      anchorEl={anchorEl}
+      onMouseEnter={() => { window.document.body.style.overflowY = 'hidden' }}
+      onMouseLeave={() => { window.document.body.style.overflowY = 'auto' }}
+    >
       <Paper className={classes.popover}>
         <Grid container spacing={2}>
           <Grid item xs={12}>
@@ -85,7 +100,7 @@ class Action extends Component {
                 <Typography variant="body2"><strong>Settings</strong></Typography>
               </Grid>
               <Grid item>
-                <IconButton onClick={onClose} size="small" edge="end">
+                <IconButton onClick={this.onClose} size="small" edge="end">
                   <CloseRounded />
                 </IconButton>
               </Grid>
@@ -129,7 +144,7 @@ class Action extends Component {
                   <CircularProgressWithLabel
                     variant="determinate"
                     onChange={this.onTime}
-                    value={time * 100 / 600000}
+                    value={time * 100 / MAX_TIME}
                     label={`${utils.prettyNumber(time / 60000)}'`}
                   />
                 </Grid>
@@ -138,13 +153,13 @@ class Action extends Component {
             <Grid item xs={12}>
               <Grid container spacing={2} className={classes.noWrap} alignItems="center">
                 <Grid item className={classes.stretch}>
-                  <Typography>Velocity (Max. 3 m/s)</Typography>
+                  <Typography>{`Velocity (Max. ${MAX_VELOCITY} m/s)`}</Typography>
                 </Grid>
                 <Grid item>
                   <CircularProgressWithLabel
                     variant="determinate"
                     onChange={this.onVelocity}
-                    value={velocity * 100 / 3}
+                    value={velocity * 100 / MAX_VELOCITY}
                     label={`${utils.prettyNumber(velocity)} m/s`}
                   />
                 </Grid>
@@ -153,13 +168,13 @@ class Action extends Component {
             <Grid item xs={12}>
               <Grid container spacing={2} className={classes.noWrap} alignItems="center">
                 <Grid item className={classes.stretch}>
-                  <Typography>Light Amptitude (Max 10,000)</Typography>
+                  <Typography>{`Light Amptitude (Max ${MAX_LIGHT})`}</Typography>
                 </Grid>
                 <Grid item>
                   <CircularProgressWithLabel
                     variant="determinate"
                     onChange={this.onLightAmptitude}
-                    value={light * 100 / 10000}
+                    value={light * 100 / MAX_LIGHT}
                     label={`${utils.prettyNumber(light / 1000)}k`}
                   />
                 </Grid>

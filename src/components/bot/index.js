@@ -14,16 +14,10 @@ class Bot extends Component {
     return this.setInfo();
   }
 
-  componentDidUpdate(prevProps) {
-    const { x: prevX, y: prevY, r: prevR } = prevProps;
-    const { x, y, r } = this.props;
-    if (x !== prevX || y !== prevY || r !== prevR) this.setInfo();
-  }
-
   setInfo = () => {
-    const { x, y, r } = this.props;
-    this.ref.current.x(x);
-    this.ref.current.y(y);
+    const { x, y, r, transform } = this.props;
+    this.ref.current.x(transform({ x, y }).x);
+    this.ref.current.y(transform({ x, y }).y);
     this.ref.current.radius(r);
   }
 
@@ -73,21 +67,22 @@ class Bot extends Component {
   }
 
   render() {
-    const { x, y, r, rotation, theme } = this.props;
+    const { x, y, r, yaw, transform, theme } = this.props;
 
     return <Fragment>
       <Wedge
-        x={x}
-        y={y}
+        x={transform({ x, y }).x}
+        y={transform({ x, y }).y}
         radius={r * 3}
         angle={60}
-        fill={theme.palette.grey[200]}
-        rotation={rotation - 30}
+        fill={theme.palette.grey[400]}
+        opacity={0.5}
+        rotation={180 * yaw / Math.PI - 30}
       />
       <Circle
         ref={this.ref}
-        x={x}
-        y={y}
+        x={transform({ x, y }).x}
+        y={transform({ x, y }).y}
         radius={r}
         {...this.onStyles()}
         {...this.onEvents()}
@@ -98,18 +93,22 @@ class Bot extends Component {
 
 Bot.defaultProps = {
   r: 10,
-  rotation: 0,
+  yaw: 0,
   x: 0,
   y: 0,
-  onClick: () => { }
+  onClick: () => { },
+  transform: () => ({ x: 0, y: 0 }),
+  inverseTransform: () => ({ x: 0, y: 0 }),
 }
 
 Bot.propTypes = {
   r: PropTypes.number,
-  rotation: PropTypes.number,
+  yaw: PropTypes.number,
   x: PropTypes.number,
   y: PropTypes.number,
   onClick: PropTypes.func,
+  transform: PropTypes.func,
+  inverseTransform: PropTypes.func,
 }
 
 export default Bot;
