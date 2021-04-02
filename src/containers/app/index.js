@@ -10,6 +10,7 @@ import Grid from '@material-ui/core/Grid';
 import Drain from 'components/drain';
 
 // Static component
+import Header from 'containers/header';
 import Home from 'containers/home';
 import UiUx from 'containers/uiux';
 
@@ -27,6 +28,12 @@ class App extends Component {
       <Grid container spacing={2}>
         <Grid item xs={12} className={classes.safe} /> {/* Safe space */}
         <Grid item xs={12}>
+          <Header />
+        </Grid>
+        <Grid item xs={12}>
+          <Drain small />
+        </Grid>
+        <Grid item xs={12}>
           <Switch>
             <Redirect exact from="/" to="/home" />
             <Route exact path='/home' component={Home} />
@@ -37,7 +44,7 @@ class App extends Component {
           <UiUx />
         </Grid>
         <Grid item xs={12}>
-          <Drain />
+          <Drain small/>
         </Grid>
       </Grid>
     </ThemeProvider >

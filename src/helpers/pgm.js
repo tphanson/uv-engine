@@ -1,14 +1,11 @@
 import { createCanvas } from 'canvas';
 
 
-
 /**
  * Pixels manipulation
  * https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Pixel_manipulation_with_canvas
  */
-export function drawToCanvas(width, height, maxValue, buffer) {
-  const canvas = createCanvas(width, height);
-  const ctx = canvas.getContext('2d');
+export function manipulatePixels(ctx, width, height, maxValue, buffer) {
   let imageData = ctx.createImageData(width, height);
   for (let i = 0; i < imageData.data.length; i += 4) {
     const offset = Number(i / 4);
@@ -19,6 +16,12 @@ export function drawToCanvas(width, height, maxValue, buffer) {
     imageData.data[i + 3] = buffer[offset] >= 0 ? 255 : 0;
   }
   ctx.putImageData(imageData, 0, 0);
+}
+
+export function drawToCanvas(width, height, maxValue, buffer) {
+  const canvas = createCanvas(width, height);
+  const ctx = canvas.getContext('2d');
+  manipulatePixels(ctx, width, height, maxValue, buffer);
   return canvas;
 }
 

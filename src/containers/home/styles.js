@@ -17,5 +17,8 @@ export default function styles(theme) {
         boxShadow: theme.shadows[6],
       },
     },
+    map: {
+      // background: theme.palette.grey['A700']
+    },
   }
 }

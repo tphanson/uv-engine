@@ -1,4 +1,4 @@
-import React, { Component, Fragment } from 'react';
+import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { withRouter } from 'react-router-dom';
@@ -6,15 +6,17 @@ import qte from 'quaternion-to-euler';
 
 import { withStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
+import Typography from '@material-ui/core/Typography';
+import ButtonGroup from '@material-ui/core/ButtonGroup';
+import Button from '@material-ui/core/Button';
 
-import { } from '@material-ui/icons';
+import { UndoRounded, RedoRounded } from '@material-ui/icons';
 
-import Drain from 'components/drain';
+import Card from 'components/card';
 import Map from 'components/map';
 import POI from 'components/poi';
 import Point from 'components/point';
 import Bot from 'components/bot';
-import Header from './header';
 import Action, { virtualEl } from './action';
 
 import styles from './styles';
@@ -50,10 +52,9 @@ class Home extends Component {
       return this.setState({ disabled });
     });
 
-    const ros = new ROS('ws://192.168.123.15:9090');
+    const ros = new ROS('ws://192.168.123.65:9090');
     // Map
     this.unsubscribeMap = ros.map(msg => {
-      console.log(msg)
       const {
         data,
         info: { width, height, resolution, origin: { position: { x, y } } }
@@ -80,7 +81,7 @@ class Home extends Component {
       const trajectory = poses.map(pose => {
         const metadata = { editable: false, t: 0, v: 0, l: 0 }
         return { ...pose, metadata }
-      }).filter((pose, index) => (index % 3 === 0)); // Reduce density
+      }).filter((pose, index) => (index % 2 === 0)); // Reduce density
       return this.setState({ trajectory });
     });
   }
@@ -152,7 +153,13 @@ class Home extends Component {
     return this.setState({ trajectory: newTrajectory }, this.onHistory);
   }
 
+  onSave = () => {
+    const { trajectory } = this.state;
+    console.log(trajectory);
+  }
+
   render() {
+    const { classes } = this.props;
     const { ui: { width } } = this.props;
     const { trajectory, map, bot, anchorEl, selected, disabled } = this.state;
 
@@ -160,59 +167,69 @@ class Home extends Component {
 
     return <Grid container spacing={2} justify="center">
       <Grid item xs={11} md={10}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12}>
-            <Header
-              disabledUndo={disabled.disabledUndo}
-              disabledRedo={disabled.disabledRedo}
-              onUndo={this.undo}
-              onRedo={this.redo}
-            />
+        <Card className={classes.map}>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <Grid container spacing={2} alignItems="center" className={classes.noWrap} justify="flex-end">
+                <Grid item>
+                  <ButtonGroup size="small" >
+                    <Button disabled={disabled.disabledUndo} onClick={this.undo} startIcon={<UndoRounded />}>
+                      <Typography>Undo</Typography>
+                    </Button>
+                    <Button disabled={disabled.disabledRedo} onClick={this.redo} startIcon={<RedoRounded />}>
+                      <Typography>Redo</Typography>
+                    </Button>
+                  </ButtonGroup>
+                </Grid>
+                <Grid item>
+                  <Button variant="contained" color="primary" onClick={this.onSave}>
+                    <Typography style={{ color: '#ffffff' }} variant="body2">Save</Typography>
+                  </Button>
+                </Grid>
+              </Grid>
+            </Grid>
+            <Grid item xs={12}>
+              <Map map={map} flipped>
+                <Bot {...bot} r={width / 150} />
+                {trajectory.map(({
+                  position: { x, y },
+                  metadata: { editable }
+                }, index) => {
+                  if (editable) return <POI
+                    key={index}
+                    x={x}
+                    y={y}
+                    r={width / 175}
+                    onClick={(e) => this.onClick(e, index)}
+                    onChange={pos => this.onChange(index, pos)}
+                  />
+                  return <Point
+                    key={index}
+                    x={x}
+                    y={y}
+                    r={width / 500}
+                    onClick={(e) => this.onClick(e, index)}
+                  />
+                })}
+              </Map>
+            </Grid>
           </Grid>
-          <Grid item xs={12}>
-            <Drain small />
-          </Grid>
-          <Grid item xs={12}>
-            <Map map={map}>
-              <Bot {...bot} r={width / 150} />
-              {trajectory.map(({
-                position: { x, y },
-                metadata: { editable }
-              }, index) => {
-                if (editable) return <POI
-                  key={index}
-                  x={x}
-                  y={y}
-                  r={width / 175}
-                  onClick={(e) => this.onClick(e, index)}
-                  onChange={pos => this.onChange(index, pos)}
-                />
-                return <Point
-                  key={index}
-                  x={x}
-                  y={y}
-                  r={width / 500}
-                  onClick={(e) => this.onClick(e, index)}
-                />
-              })}
-            </Map>
-          </Grid>
-          <Action
-            anchorEl={anchorEl}
-            editable={selectedNode.metadata.editable}
-            x={selectedNode.position.x}
-            y={selectedNode.position.y}
-            time={selectedNode.metadata.t}
-            velocity={selectedNode.metadata.v}
-            light={selectedNode.metadata.l}
-            onClose={this.onClose}
-            onSwitch={this.onSwitch}
-            onTime={this.onTime}
-            onVelocity={this.onVelocity}
-            onLightAmptitude={this.onLightAmptitude}
-          />
-        </Grid>
+        </Card>
       </Grid>
+      <Action
+        anchorEl={anchorEl}
+        editable={selectedNode.metadata.editable}
+        x={selectedNode.position.x}
+        y={selectedNode.position.y}
+        time={selectedNode.metadata.t}
+        velocity={selectedNode.metadata.v}
+        light={selectedNode.metadata.l}
+        onClose={this.onClose}
+        onSwitch={this.onSwitch}
+        onTime={this.onTime}
+        onVelocity={this.onVelocity}
+        onLightAmptitude={this.onLightAmptitude}
+      />
     </Grid>
   }
 }

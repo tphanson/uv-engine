@@ -1,17 +1,11 @@
 
 import React, { Component, Children, cloneElement, createRef } from 'react';
 import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { bindActionCreators } from 'redux';
-import { withRouter } from 'react-router-dom';
 import isEqual from 'react-fast-compare';
 import { Stage, Layer, Image, Arrow } from 'react-konva';
 
-import { withStyles, withTheme } from '@material-ui/core/styles';
+import { withTheme } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
-
-import styles from './styles';
-import { setError } from 'modules/ui.reducer';
 
 
 class Map extends Component {
@@ -38,8 +32,12 @@ class Map extends Component {
     const { map: prevMap } = prevProps;
     const { map } = this.props;
     if (!isEqual(map, prevMap)) this.onLoadMap();
+
   }
 
+  /**
+   * To be passed for children to recalculate thier position
+   */
   transform = ({ x, y }) => {
     const { map } = this.props;
     const { wide, ratio } = this.state;
@@ -50,7 +48,6 @@ class Map extends Component {
       y: ((y - origin.y) * wide) / (resolution * height * ratio)
     }
   }
-
   inverseTransform = ({ x, y }) => {
     const { map } = this.props;
     const { wide, ratio } = this.state;
@@ -65,7 +62,7 @@ class Map extends Component {
   onLoadContainer = () => {
     const { theme } = this.props;
     const container = window.document.getElementById('container');
-    const wide = container.offsetWidth - theme.spacing(2);
+    const wide = container.offsetWidth - theme.spacing(4);
     return this.setState({ wide }, this.onLoadMap);
   }
 
@@ -76,7 +73,15 @@ class Map extends Component {
     const { width, height, image, origin, resolution } = map;
     const ratio = width / height;
     return this.setState({ ratio, origin, resolution }, () => {
-      this.map.current.image(image);
+      // Prevent blurry map
+      const target = this.map.current;
+      if (!target) return;
+      const nativeCtx = target.getContext()._context;
+      nativeCtx.webkitImageSmoothingEnabled = false;
+      nativeCtx.mozImageSmoothingEnabled = false;
+      nativeCtx.imageSmoothingEnabled = false;
+      // Set image
+      target.image(image);
     });
   }
 
@@ -85,7 +90,7 @@ class Map extends Component {
     const layer = this.layer.current;
     if (!layer) return;
     // Old states
-    const oldScale = layer.scaleX();
+    const oldScale = Math.abs(layer.scaleX());
     const oldPosition = layer.position();
     // New scale
     const scaleBy = 1.05;
@@ -100,9 +105,7 @@ class Map extends Component {
       y: wide / ratio * oldScale / 2 + oldPosition.y
     }
     let newCentroid = oldCentroid;
-    if (newScale === 1) {
-      newCentroid = origin;
-    }
+    if (newScale === 1) newCentroid = origin;
     if (oldScale !== 1) {
       const deltaX = (oldCentroid.x - origin.x) / (oldScale - 1);
       const deltaY = (oldCentroid.y - origin.y) / (oldScale - 1);
@@ -121,19 +124,21 @@ class Map extends Component {
     }
     layer.position(newPosition);
     // Render
-    layer.batchDraw();
+    return layer.batchDraw();
   }
 
   onDragEnd = (e) => {
     const { wide, ratio } = this.state;
-    const scale = this.layer.current.scaleX();
+    const layer = this.layer.current;
+    if (!layer) return;
+    const scale = layer.scaleX();
     const minX = wide * (1 - scale);
     const minY = wide / ratio * (1 - scale);
     const newPosition = {
-      x: Math.min(0, Math.max(minX, this.layer.current.x())),
-      y: Math.min(0, Math.max(minY, this.layer.current.y())),
+      x: Math.min(0, Math.max(minX, layer.x())),
+      y: Math.min(0, Math.max(minY, layer.y())),
     }
-    this.layer.current.position(newPosition);
+    return layer.position(newPosition);
   }
 
   onStyles = () => {
@@ -148,41 +153,62 @@ class Map extends Component {
     return styles;
   }
 
+  // onEvents = () => {
+  //   const { theme } = this.props;
+  //   const events = {
+  //     onMouseEnter: () => {
+  //       this.map.current.to({
+  //         shadowOffsetY: 10,
+  //         shadowBlur: 20,
+  //         duration: theme.transitions.duration.shorter / 1000
+  //       });
+  //     },
+  //     onMouseLeave: () => {
+  //       this.map.current.to({
+  //         shadowOffsetY: 6,
+  //         shadowBlur: 10,
+  //         duration: theme.transitions.duration.shortest / 1000
+  //       });
+  //     }
+  //   }
+  //   return events;
+  // }
+
   render() {
-    // const { classes } = this.props;
     const { children, theme } = this.props;
     const { ratio, wide } = this.state;
     const boundary = [0, 0, wide, wide / ratio];
 
-    return <Grid container spacing={2} onScroll={this.onScroll}>
+    return <Grid container spacing={2}>
       <Grid item xs={12} id="container">
         {wide ? <Stage width={wide} height={wide / ratio} onWheel={this.onZoom} >
-          <Layer ref={this.layer} draggable onDragEnd={this.onDragEnd}>
+          <Layer ref={this.layer} onDragEnd={this.onDragEnd} draggable >
             <Image
               ref={this.map}
               width={wide}
               height={wide / ratio}
               {...this.onStyles()}
+            // {...this.onEvents()}
             />
             <Arrow
               x={this.transform({ x: 0, y: 0 }).x}
               y={this.transform({ x: 0, y: 0 }).y}
-              points={[0, 0, 0, 20]}
-              fill={theme.palette.grey[400]}
+              points={[0, 0, 0, 15]}
+              fill={theme.palette.grey[500]}
               pointerLength={2}
               pointerWidth={2}
-              stroke={theme.palette.grey[400]}
+              stroke={theme.palette.grey[500]}
               strokeWidth={2}
               lineJoin="round"
             />
             <Arrow
               x={this.transform({ x: 0, y: 0 }).x}
               y={this.transform({ x: 0, y: 0 }).y}
-              points={[0, 0, 20, 0]}
-              fill={theme.palette.grey[400]}
+              points={[0, 0, 15, 0]}
+              fill={theme.palette.grey[500]}
               pointerLength={2}
               pointerWidth={2}
-              stroke={theme.palette.grey[400]}
+              stroke={theme.palette.grey[500]}
               strokeWidth={2}
               lineJoin="round"
             />
@@ -199,25 +225,12 @@ class Map extends Component {
   }
 }
 
-
 Map.defaultProps = {
-  onChange: () => { }
+  flipped: false,
 }
 
 Map.propTypes = {
-  map: PropTypes.object.isRequired,
-  onChange: PropTypes.func
+  flipped: PropTypes.bool,
 }
 
-const mapStateToProps = state => ({
-  ui: state.ui,
-});
-
-const mapDispatchToProps = dispatch => bindActionCreators({
-  setError,
-}, dispatch);
-
-export default withRouter(connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(withTheme(withStyles(styles)(Map))));
+export default withTheme(Map);
