@@ -52,7 +52,7 @@ class Home extends Component {
       return this.setState({ disabled });
     });
 
-    const ros = new ROS('ws://192.168.123.65:9090');
+    const ros = new ROS('ws://192.168.123.12:9090');
     // Map
     this.unsubscribeMap = ros.map(msg => {
       const {

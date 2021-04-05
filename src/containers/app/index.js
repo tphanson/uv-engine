@@ -11,8 +11,10 @@ import Drain from 'components/drain';
 
 // Static component
 import Header from 'containers/header';
+import Auth, { PrivateRoute } from 'containers/auth';
 import Home from 'containers/home';
 import UiUx from 'containers/uiux';
+import NotFound from 'containers/404';
 
 // CSS
 import theme from 'static/styles/theme';
@@ -31,12 +33,14 @@ class App extends Component {
           <Header />
         </Grid>
         <Grid item xs={12}>
-          <Drain small />
+          <Drain />
         </Grid>
         <Grid item xs={12}>
           <Switch>
             <Redirect exact from="/" to="/home" />
-            <Route exact path='/home' component={Home} />
+            <Route exact path='/auth' component={Auth} />
+            <PrivateRoute exact path='/home' component={Home} />
+            <Route path='*' component={NotFound} />
           </Switch>
         </Grid>
         {/* Application */}
@@ -44,7 +48,7 @@ class App extends Component {
           <UiUx />
         </Grid>
         <Grid item xs={12}>
-          <Drain small/>
+          <Drain small />
         </Grid>
       </Grid>
     </ThemeProvider >

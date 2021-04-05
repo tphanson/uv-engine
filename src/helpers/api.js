@@ -20,8 +20,8 @@ api.post = (url, params = null) => {
       return resolve(data);
     }).catch(er => {
       if (er.response) {
-        const { response: { data: { error } } } = er;
-        return reject(error);
+        const { response: { data: { msg } } } = er;
+        return reject(msg);
       }
       return reject(er.message);
     });
@@ -41,8 +41,8 @@ api.get = (url, params = null) => {
       return resolve(data);
     }).catch(er => {
       if (er.response) {
-        const { response: { data: { error } } } = er;
-        return reject(error);
+        const { response: { data: { msg } } } = er;
+        return reject(msg);
       }
       return reject(er.message);
     });
@@ -62,8 +62,8 @@ api.put = (url, params = null) => {
       return resolve(data);
     }).catch(er => {
       if (er.response) {
-        const { response: { data: { error } } } = er;
-        return reject(error);
+        const { response: { data: { msg } } } = er;
+        return reject(msg);
       }
       return reject(er.message);
     });
@@ -83,8 +83,8 @@ api.delete = (url, params = null) => {
       return resolve(data);
     }).catch(er => {
       if (er.response) {
-        const { response: { data: { error } } } = er;
-        return reject(error);
+        const { response: { data: { msg } } } = er;
+        return reject(msg);
       }
       return reject(er.message);
     });
