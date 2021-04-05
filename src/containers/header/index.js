@@ -22,7 +22,7 @@ class Header extends Component {
     const { classes } = this.props;
 
     return <Grid container spacing={2} justify="center">
-      <Grid item xs={11}>
+      <Grid item xs={11} md={10}>
         <Card>
           <Grid container spacing={5} className={classes.noWrap} justify="space-between" alignItems="center">
             <Grid item className={classes.stretch}>
