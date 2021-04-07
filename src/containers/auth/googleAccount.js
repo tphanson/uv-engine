@@ -25,6 +25,7 @@ class GoogleAccount extends Component {
         <Button
           variant="contained"
           startIcon={<Avatar src={G} className={classes.avatar} />}
+          disabled
           fullWidth
         >
           <Typography>Login with Google</Typography>

@@ -109,8 +109,6 @@ export const logout = () => {
 
 /**
  * Reducder
- * vevovi2665@yncyjs.com
- * h54TnWefQTFD
  */
 // eslint-disable-next-line
 export default (state = defaultState, action) => {

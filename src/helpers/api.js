@@ -1,4 +1,11 @@
 import axios from 'axios';
+import storage from 'helpers/storage';
+
+const getToken = () => {
+  let token = storage.get('token');
+  if (!token || typeof token !== 'string') return null;
+  return token;
+}
 
 const api = {}
 
@@ -10,10 +17,12 @@ const api = {}
 // Create
 api.post = (url, params = null) => {
   return new Promise((resolve, reject) => {
+    const authHeader = getToken();
     return axios({
       method: 'post',
       url: url,
       data: params,
+      headers: authHeader ? { 'Authorization': authHeader } : null
     }).then(re => {
       let data = re.data;
       if (data.status === 'ERROR') return reject(data.error);
@@ -30,11 +39,13 @@ api.post = (url, params = null) => {
 
 // Read
 api.get = (url, params = null) => {
+  const authHeader = getToken();
   return new Promise((resolve, reject) => {
     return axios({
       method: 'get',
       url: url,
       params: params,
+      headers: authHeader ? { 'Authorization': authHeader } : null
     }).then(re => {
       let data = re.data;
       if (data.status === 'ERROR') return reject(data.error);
@@ -51,11 +62,13 @@ api.get = (url, params = null) => {
 
 // Update
 api.put = (url, params = null) => {
+  const authHeader = getToken();
   return new Promise((resolve, reject) => {
     return axios({
       method: 'put',
       url: url,
       data: params,
+      headers: authHeader ? { 'Authorization': authHeader } : null
     }).then(re => {
       let data = re.data;
       if (data.status === 'ERROR') return reject(data.error);
@@ -72,11 +85,13 @@ api.put = (url, params = null) => {
 
 // Delete
 api.delete = (url, params = null) => {
+  const authHeader = getToken();
   return new Promise((resolve, reject) => {
     return axios({
       method: 'delete',
       url: url,
       data: params,
+      headers: authHeader ? { 'Authorization': authHeader } : null
     }).then(re => {
       let data = re.data;
       if (data.status === 'ERROR') return reject(data.error);

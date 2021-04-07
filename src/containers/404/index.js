@@ -15,8 +15,8 @@ import styles from './styles';
 class NotFound extends Component {
 
   render() {
-    return <Grid container spacing={2} justify="center">
-      <Grid item xs={11} md={10}>
+    return <Grid container spacing={2}>
+      <Grid item xs={12}>
         <Typography variant="h2">Page not found</Typography>
       </Grid>
     </Grid>

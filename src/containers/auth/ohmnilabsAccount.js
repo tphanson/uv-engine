@@ -18,7 +18,11 @@ import O from 'static/images/o-logo.png';
 import { setError } from 'modules/ui.reducer';
 import { loginOhmnilabs } from 'modules/auth.reducer';
 
-
+/**
+ * Test account
+ * vevovi2665@yncyjs.com
+ * h54TnWefQTFD
+ */
 class OhmnilabsAccount extends Component {
   constructor() {
     super();

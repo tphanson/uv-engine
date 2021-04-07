@@ -18,7 +18,8 @@ import Button from '@material-ui/core/Button';
 
 import {
   MenuRounded, TimelineRounded, PersonRounded,
-  ExitToAppRounded, LockRounded,
+  ExitToAppRounded, LockRounded, MapRounded,
+  EditLocationRounded,
 } from '@material-ui/icons';
 
 import Card from 'components/card';
@@ -70,8 +71,8 @@ class Header extends Component {
     const { auth: { logged, username } } = this.props;
     const { anchorEl } = this.state;
 
-    return <Grid container spacing={2} justify="center">
-      <Grid item xs={11} md={10}>
+    return <Grid container spacing={2}>
+      <Grid item xs={12}>
         <Card>
           <Grid container spacing={5} className={classes.noWrap} justify="space-between" alignItems="center">
             <Grid item className={classes.stretch}>
@@ -95,7 +96,19 @@ class Header extends Component {
                 <List>
                   <ListItem button component={RouterLink} to={'/home'}>
                     <ListItemIcon>
+                      <MapRounded />
+                    </ListItemIcon>
+                    <ListItemText primary="Home" secondary="Map/Path selection" />
+                  </ListItem>
+                  <ListItem button component={RouterLink} to={'/cleaning'}>
+                    <ListItemIcon>
                       <TimelineRounded />
+                    </ListItemIcon>
+                    <ListItemText primary="Cleaning" secondary="Start & Monitor Ohmni in work" />
+                  </ListItem>
+                  <ListItem button component={RouterLink} to={'/editor'}>
+                    <ListItemIcon>
+                      <EditLocationRounded />
                     </ListItemIcon>
                     <ListItemText primary="Path Editor" />
                   </ListItem>

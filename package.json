@@ -29,13 +29,14 @@
     "redux": "^4.0.5",
     "redux-thunk": "^2.3.0",
     "roslib": "^1.1.0",
-    "serve": "^11.3.2",
     "web-vitals": "^1.1.1"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "prod": "REACT_APP_ENV=production react-scripts build",
     "test": "react-scripts test",
+    "serve": "serve -s build -l 3000",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -55,5 +56,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "serve": "^11.3.2"
   }
 }
