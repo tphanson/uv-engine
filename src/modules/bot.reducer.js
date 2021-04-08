@@ -28,12 +28,14 @@ export const getBotInfo = () => {
         return reject(er);
       }
 
-      window.Ohmni.requestBotInfo();
-      return window.Ohmni.cbRequestBotInfo = info => {
-        const { botId } = JSON.parse(info);
-        dispatch({ type: GET_BOT_INFO_OK, data: { botId } });
-        return resolve({ botId });
-      }
+      const { api: { localBot: { base } } } = configs;
+      return api.get(base + '/bot').then(({ data }) => {
+        dispatch({ type: GET_BOT_INFO_OK, data: { map: data } });
+        return resolve(data);
+      }).catch(er => {
+        dispatch({ type: GET_BOT_INFO_FAIL, reason: er.toString() });
+        return reject(er);
+      });
     });
   }
 }
@@ -56,7 +58,7 @@ export const getMapInfo = (botId) => {
         return reject(er);
       }
 
-      const { api: { base } } = configs;
+      const { api: { cloud: { base } } } = configs;
       return api.get(base + `/app/bots/${botId}/maps`).then(({ data }) => {
         dispatch({ type: GET_MAP_INFO_OK, data: { map: data } });
         return resolve(data);

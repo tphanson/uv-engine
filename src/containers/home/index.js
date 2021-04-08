@@ -45,6 +45,7 @@ class Home extends Component {
   loadData = () => {
     const { getBotInfo, getMapInfo, setError } = this.props;
     return getBotInfo().then(({ botId }) => {
+      console.log(botId)
       return getMapInfo(botId);
     }).then(data => {
       return this.setState({ data });

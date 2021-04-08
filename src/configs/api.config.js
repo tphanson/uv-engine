@@ -7,21 +7,36 @@ const configs = {}
  * Development configurations
  */
 configs.development = {
-  base: 'https://api-branch.ohmnilabs.com',
+  cloud: {
+    base: 'https://api-branch.ohmnilabs.com',
+  },
+  localBot: {
+    base: 'https://localhost:3001'
+  }
 }
 
 /**
  * Staging configurations
  */
 configs.staging = {
-  base: 'https://api-branch.ohmnilabs.com',
+  cloud: {
+    base: 'https://api-branch.ohmnilabs.com',
+  },
+  localBot: {
+    base: 'https://localhost:3001'
+  }
 }
 
 /**
  * Production configurations
  */
 configs.production = {
-  base: 'https://api-branch.ohmnilabs.com',
+  cloud: {
+    base: 'https://api-branch.ohmnilabs.com',
+  },
+  localBot: {
+    base: 'https://localhost:3001'
+  }
 }
 
 /**
