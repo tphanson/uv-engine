@@ -20,10 +20,12 @@ import Bot from 'components/bot';
 import Action, { virtualEl } from './action';
 
 import styles from './styles';
+import configs from 'configs';
 import History from 'helpers/history';
 import ROS from 'helpers/ros';
 import { drawToCanvas, canvas2Image } from 'helpers/pgm';
 import { setError } from 'modules/ui.reducer';
+import { getMap } from 'modules/bot.reducer';
 
 
 const EMPTY_NODE = { orientation: {}, position: {}, metadata: {} }
@@ -45,14 +47,44 @@ class Editor extends Component {
     }
 
     this.history = new History([]);
-  }
-
-  componentDidMount() {
     this.history.watch(disabled => {
       return this.setState({ disabled });
     });
+  }
 
-    const ros = new ROS('ws://192.168.123.30:9090');
+  componentDidMount() {
+    this.onRos();
+    this.loadData();
+  }
+
+  componentWillUnmount() {
+    this.unsubscribeMap();
+    this.unsubscribeBot();
+    this.unsubscribePath();
+  }
+
+  /**
+   * Load & watch data
+   */
+
+  parseParams = () => {
+    const { match: { params: { botId, mapId } } } = this.props;
+    return { botId, mapId };
+  }
+
+  loadData = () => {
+    const { getMap, setError } = this.props;
+    const { botId, mapId } = this.parseParams();
+    return getMap(botId, mapId).then(re => {
+      console.log(re);
+    }).catch(er => {
+      return setError(er);
+    });
+  }
+
+  onRos = () => {
+    const { api: { localBot: { rosbridge } } } = configs;
+    const ros = new ROS(rosbridge);
     // Map
     this.unsubscribeMap = ros.map(msg => {
       const {
@@ -86,11 +118,9 @@ class Editor extends Component {
     });
   }
 
-  componentWillUnmount() {
-    this.unsubscribeMap();
-    this.unsubscribeBot();
-    this.unsubscribePath();
-  }
+  /**
+   * History iteraction
+   */
 
   onHistory = () => {
     const { trajectory } = this.state;
@@ -106,6 +136,10 @@ class Editor extends Component {
     const newTrajectory = this.history.redo();
     return this.setState({ trajectory: newTrajectory });
   }
+
+  /**
+   * Map iteraction
+   */
 
   onChange = (index, pos) => {
     const { trajectory } = this.state;
@@ -157,6 +191,10 @@ class Editor extends Component {
     const { trajectory } = this.state;
     console.log(trajectory);
   }
+
+  /**
+   * Render
+   */
 
   render() {
     const { classes } = this.props;
@@ -236,10 +274,12 @@ class Editor extends Component {
 
 const mapStateToProps = state => ({
   ui: state.ui,
+  bot: state.bot,
 });
 
 const mapDispatchToProps = dispatch => bindActionCreators({
   setError,
+  getMap,
 }, dispatch);
 
 export default withRouter(connect(

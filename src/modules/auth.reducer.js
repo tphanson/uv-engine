@@ -57,7 +57,7 @@ export const loginOhmnilabs = (username, password) => {
         return reject(er);
       }
 
-      const { api: { base } } = configs;
+      const { api: { cloud: { base } } } = configs;
       return api.post(base + '/sign_in', { username, password }).then(({ data }) => {
         const { token, username } = data;
 

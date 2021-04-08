@@ -22,7 +22,7 @@ import {
 
 import styles from './styles';
 import { setError } from 'modules/ui.reducer';
-import { getBotInfo, getMapInfo } from 'modules/bot.reducer';
+import { getBotInfo, getCurrentMap, getMaps } from 'modules/bot.reducer';
 
 
 class Home extends Component {
@@ -30,11 +30,10 @@ class Home extends Component {
     super();
 
     this.state = {
-      data: {
-        local_maps: [],
-        group_maps: []
-      },
-      plan: ''
+      botId: '',
+      localMaps: [],
+      groupedMaps: [],
+      mapId: ''
     }
   }
 
@@ -43,25 +42,30 @@ class Home extends Component {
   }
 
   loadData = () => {
-    const { getBotInfo, getMapInfo, setError } = this.props;
-    return getBotInfo().then(({ botId }) => {
-      console.log(botId)
-      return getMapInfo(botId);
+    const { getBotInfo, getCurrentMap, getMaps, setError } = this.props;
+    let botId = '';
+    let mapId = '';
+    return getBotInfo().then(({ botId: re }) => {
+      botId = re;
+      return getCurrentMap();
+    }).then(({ mapId: re }) => {
+      mapId = re;
+      return getMaps(botId);
     }).then(data => {
-      return this.setState({ data });
+      return this.setState({ ...data, botId, mapId });
     }).catch(er => {
       return setError(er);
     });
   }
 
   onPlan = (e) => {
-    const plan = e.target.value || '';
-    return this.setState({ plan });
+    const mapId = e.target.value || '';
+    return this.setState({ mapId });
   }
 
   render() {
     const { classes } = this.props;
-    const { data: { local_maps, group_maps }, plan } = this.state;
+    const { botId, localMaps, groupedMaps, mapId } = this.state;
 
     return <Grid container spacing={2}>
       <Grid item xs={12}>
@@ -74,19 +78,19 @@ class Home extends Component {
             color="primary"
             label="Map"
             labelId="map"
-            value={plan}
+            value={mapId}
             onChange={this.onPlan}
           >
             <ListSubheader>Local maps</ListSubheader>
-            {local_maps.length ? local_maps.map(({ _id, location, name }) => <MenuItem
+            {localMaps.length ? localMaps.map(({ _id, name }) => <MenuItem
               key={_id}
-              value={location}
+              value={_id}
             >{name}</MenuItem>) : <ListSubheader>No data</ListSubheader>}
             <Divider />
             <ListSubheader>Group maps</ListSubheader>
-            {group_maps.length ? group_maps.map(({ _id, location, name }) => <MenuItem
+            {groupedMaps.length ? groupedMaps.map(({ _id, name }) => <MenuItem
               key={_id}
-              value={location}
+              value={_id}
             >{name}</MenuItem>) : <ListSubheader>No data</ListSubheader>}
           </Select>
         </FormControl>
@@ -97,7 +101,7 @@ class Home extends Component {
             <Button
               color="primary"
               component={RouteLink}
-              to={`/editor/${plan}`}
+              to={mapId ? `/editor/${botId}/${mapId}` : '#'}
               startIcon={<EditLocationRounded />}
             >
               <Typography>Edit map</Typography>
@@ -107,7 +111,8 @@ class Home extends Component {
             <Button
               variant="contained"
               color="primary"
-              onClick={this.loadData}
+              component={RouteLink}
+              to={mapId ? `/cleaning/${botId}/${mapId}` : '#'}
               endIcon={<ArrowForwardIosRounded />}
             >
               <Typography>Start cleaning</Typography>
@@ -126,7 +131,7 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = dispatch => bindActionCreators({
   setError,
-  getBotInfo, getMapInfo,
+  getBotInfo, getCurrentMap, getMaps,
 }, dispatch);
 
 export default withRouter(connect(
