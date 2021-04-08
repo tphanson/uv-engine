@@ -112,11 +112,9 @@ export const getMap = (botId, mapId) => {
           return reject(er);
         }
 
-        console.log(mapId, location)
         const { api: { localBot: { base } } } = configs;
         return api.get(base + `/map`, { mapId, location })
       }).then(({ data }) => {
-        console.log(mapId)
         dispatch({ type: GET_MAP_OK, data });
         return resolve(data);
       }).catch(er => {
