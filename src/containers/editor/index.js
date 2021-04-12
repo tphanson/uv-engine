@@ -78,6 +78,10 @@ class Editor extends Component {
       const { poses, metadata } = path;
       const trajectory = utils.smoothPath(poses).map((pose, i) => {
         let data = { editable: false, time: 0, velocity: 0, light: 0 }
+        // Make sure always there is one segment at least
+        if (i === 0) data = { editable: true, time: 0, velocity: 0.018, light: 2000 }
+        if (i === poses.length - 1) data = { editable: true, time: 0, velocity: 0.018, light: 2000 }
+        // Load saved segments
         metadata.forEach(({ index, ...others }) => {
           if (i === index) data = { editable: true, ...others }
         });
