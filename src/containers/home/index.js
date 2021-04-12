@@ -19,7 +19,6 @@ import {
   ArrowForwardIosRounded, EditLocationRounded,
 } from '@material-ui/icons';
 
-
 import styles from './styles';
 import { setError } from 'modules/ui.reducer';
 import { getBotInfo, getCurrentMap, getMaps } from 'modules/bot.reducer';

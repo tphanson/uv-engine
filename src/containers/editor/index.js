@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { withRouter } from 'react-router-dom';
 import qte from 'quaternion-to-euler';
+import dcp from 'deepcopy';
 
 import { withStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
@@ -21,11 +22,12 @@ import Action, { virtualEl } from './action';
 
 import styles from './styles';
 import configs from 'configs';
+import utils from 'helpers/utils';
 import History from 'helpers/history';
 import ROS from 'helpers/ros';
 import { drawToCanvas, canvas2Image } from 'helpers/pgm';
 import { setError } from 'modules/ui.reducer';
-import { getMap } from 'modules/bot.reducer';
+import { getMap, savePath } from 'modules/bot.reducer';
 
 
 const EMPTY_NODE = { orientation: {}, position: {}, metadata: {} }
@@ -39,6 +41,7 @@ class Editor extends Component {
       selected: -1,
       trajectory: [],
       map: {},
+      path: {},
       bot: {},
       disabled: {
         disabledUndo: true,
@@ -60,7 +63,7 @@ class Editor extends Component {
   componentWillUnmount() {
     this.unsubscribeMap();
     this.unsubscribeBot();
-    this.unsubscribePath();
+    // this.unsubscribePath();
   }
 
   /**
@@ -75,8 +78,17 @@ class Editor extends Component {
   loadData = () => {
     const { getMap, setError } = this.props;
     const { botId, mapId } = this.parseParams();
-    return getMap(botId, mapId).then(re => {
-      console.log(re);
+    return getMap(botId, mapId).then(({ loaded, path }) => {
+      if (!loaded) return setError('Cannot load the desired map. The system will use the current map on Ohmni\'s local.');
+      const { poses, metadata } = path;
+      const trajectory = utils.smoothPath(poses).map((pose, i) => {
+        let data = { editable: false, time: 0, velocity: 0, light: 0 }
+        metadata.forEach(({ index, ...others }) => {
+          if (i === index) data = { editable: true, ...others }
+        });
+        return { ...pose, metadata: data }
+      });
+      return this.setState({ trajectory, path });
     }).catch(er => {
       return setError(er);
     });
@@ -108,14 +120,14 @@ class Editor extends Component {
       return this.setState({ bot });
     });
     // Path
-    this.unsubscribePath = ros.path(msg => {
-      const { poses } = msg;
-      const trajectory = poses.map(pose => {
-        const metadata = { editable: false, t: 0, v: 0, l: 0 }
-        return { ...pose, metadata }
-      }).filter((pose, index) => (index % 2 === 0)); // Reduce density
-      return this.setState({ trajectory });
-    });
+    // this.unsubscribePath = ros.path(msg => {
+    //   const { poses } = msg;
+    //   const trajectory = poses.map(pose => {
+    //     const metadata = { editable: false, time: 0, velocity: 0, light: 0 }
+    //     return { ...pose, metadata }
+    //   }).filter((pose, index) => (index % 2 === 0)); // Reduce density
+    //   return this.setState({ trajectory });
+    // });
   }
 
   /**
@@ -166,30 +178,47 @@ class Editor extends Component {
     return this.setState({ trajectory: newTrajectory }, this.onHistory);
   }
 
-  onTime = (t) => {
+  onTime = (time) => {
     const { trajectory, selected } = this.state;
     const newTrajectory = [...trajectory];
-    newTrajectory[selected].metadata = { ...newTrajectory[selected].metadata, t }
+    newTrajectory[selected].metadata = { ...newTrajectory[selected].metadata, time }
     return this.setState({ trajectory: newTrajectory }, this.onHistory);
   }
 
-  onVelocity = (v) => {
+  onVelocity = (velocity) => {
     const { trajectory, selected } = this.state;
     const newTrajectory = [...trajectory];
-    newTrajectory[selected].metadata = { ...newTrajectory[selected].metadata, v }
+    newTrajectory[selected].metadata = { ...newTrajectory[selected].metadata, velocity }
     return this.setState({ trajectory: newTrajectory }, this.onHistory);
   }
 
-  onLightAmptitude = (l) => {
+  onLightAmptitude = (light) => {
     const { trajectory, selected } = this.state;
     const newTrajectory = [...trajectory];
-    newTrajectory[selected].metadata = { ...newTrajectory[selected].metadata, l }
+    newTrajectory[selected].metadata = { ...newTrajectory[selected].metadata, light }
     return this.setState({ trajectory: newTrajectory }, this.onHistory);
   }
 
   onSave = () => {
-    const { trajectory } = this.state;
-    console.log(trajectory);
+    const { savePath, setError } = this.props;
+    const { path, trajectory } = this.state;
+    const metadata = trajectory.map((point, index) => {
+      const data = dcp(point.metadata);
+      data.index = index;
+      return data;
+    }).filter(data => data.editable).map(re => {
+      const data = dcp(re);
+      delete data.editable;
+      return data;
+    });
+    const newPath = dcp(path);
+    newPath.metadata = metadata;
+    const { mapId } = this.parseParams();
+    return savePath(mapId, newPath).then(re => {
+      console.log(re);
+    }).catch(er => {
+      return setError(er);
+    });
   }
 
   /**
@@ -259,9 +288,9 @@ class Editor extends Component {
         editable={selectedNode.metadata.editable}
         x={selectedNode.position.x}
         y={selectedNode.position.y}
-        time={selectedNode.metadata.t}
-        velocity={selectedNode.metadata.v}
-        light={selectedNode.metadata.l}
+        time={selectedNode.metadata.time}
+        velocity={selectedNode.metadata.velocity}
+        light={selectedNode.metadata.light}
         onClose={this.onClose}
         onSwitch={this.onSwitch}
         onTime={this.onTime}
@@ -279,7 +308,7 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = dispatch => bindActionCreators({
   setError,
-  getMap,
+  getMap, savePath,
 }, dispatch);
 
 export default withRouter(connect(

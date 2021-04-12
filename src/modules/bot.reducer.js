@@ -149,6 +149,37 @@ export const getCurrentMap = () => {
   }
 }
 
+/**
+ * Save map
+ */
+export const SAVE_PATH = 'SAVE_PATH';
+export const SAVE_PATH_OK = 'SAVE_PATH_OK';
+export const SAVE_PATH_FAIL = 'SAVE_PATH_FAIL';
+
+export const savePath = (mapId, path) => {
+  return dispatch => {
+    return new Promise((resolve, reject) => {
+      dispatch({ type: SAVE_PATH });
+
+      if (!mapId || !path) {
+        const er = 'Invalid input';
+        dispatch({ type: SAVE_PATH_FAIL, reason: er });
+        return reject(er);
+      }
+
+      const { api: { localBot: { base } } } = configs;
+      return api.put(base + `/path`, { mapId, path }).then(({ data }) => {
+        dispatch({ type: SAVE_PATH_OK });
+        return resolve(data);
+      }).catch(er => {
+        dispatch({ type: SAVE_PATH_FAIL, reason: er.toString() });
+        return reject(er);
+      });
+    });
+  }
+}
+
+
 
 /**
  * Reducder
@@ -171,6 +202,10 @@ export default (state = defaultState, action) => {
     case GET_CURRENT_MAP_OK:
       return { ...state, ...action.data };
     case GET_CURRENT_MAP_FAIL:
+      return { ...state, ...action.data };
+    case SAVE_PATH_OK:
+      return { ...state, ...action.data };
+    case SAVE_PATH_FAIL:
       return { ...state, ...action.data };
     default:
       return state;
