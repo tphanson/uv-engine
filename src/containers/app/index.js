@@ -14,6 +14,7 @@ import Header from 'containers/header';
 import Auth, { PrivateRoute } from 'containers/auth';
 import Home from 'containers/home';
 import Editor from 'containers/editor';
+import Cleaning from 'containers/cleaning';
 import UiUx from 'containers/uiux';
 import NotFound from 'containers/404';
 
@@ -42,6 +43,7 @@ class App extends Component {
             <Route exact path='/auth' component={Auth} />
             <PrivateRoute exact path='/home' component={Home} />
             <PrivateRoute exact path='/editor/:botId/:mapId' component={Editor} />
+            <PrivateRoute exact path='/cleaning' component={Cleaning} />
             <Route path='*' component={NotFound} />
           </Switch>
         </Grid>

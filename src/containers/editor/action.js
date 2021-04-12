@@ -84,8 +84,9 @@ class Action extends Component {
     return <Popper
       open={anchorEl.open}
       anchorEl={anchorEl}
-      onMouseEnter={() => { window.document.body.style.overflowY = 'hidden' }}
-      onMouseLeave={() => { window.document.body.style.overflowY = 'auto' }}
+      popperOptions={{
+        onCreate: () => { window.document.body.style.overflowY = 'hidden' }
+      }}
     >
       <Paper className={classes.popover}>
         <Grid container spacing={2}>

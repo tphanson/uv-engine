@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { withRouter } from 'react-router-dom';
-import qte from 'quaternion-to-euler';
 import dcp from 'deepcopy';
 
 import { withStyles } from '@material-ui/core/styles';
@@ -17,7 +16,6 @@ import Card from 'components/card';
 import Map from 'components/map';
 import POI from 'components/poi';
 import Point from 'components/point';
-import Bot from 'components/bot';
 import Action, { virtualEl } from './action';
 
 import styles from './styles';
@@ -42,7 +40,6 @@ class Editor extends Component {
       trajectory: [],
       map: {},
       path: {},
-      bot: {},
       disabled: {
         disabledUndo: true,
         disabledRedo: true,
@@ -56,14 +53,12 @@ class Editor extends Component {
   }
 
   componentDidMount() {
-    this.onRos();
-    this.loadData();
+    this.loadData(this.onRos);
   }
 
   componentWillUnmount() {
-    this.unsubscribeMap();
-    this.unsubscribeBot();
-    // this.unsubscribePath();
+    if (this.unsubscribeMap) this.unsubscribeMap();
+    // if (this.unsubscribeMap) this.unsubscribePath();
   }
 
   /**
@@ -75,11 +70,11 @@ class Editor extends Component {
     return { botId, mapId };
   }
 
-  loadData = () => {
+  loadData = (callback = () => { }) => {
     const { getMap, setError } = this.props;
     const { botId, mapId } = this.parseParams();
     return getMap(botId, mapId).then(({ loaded, path }) => {
-      if (!loaded) return setError('Cannot load the desired map. The system will use the current map on Ohmni\'s local.');
+      if (!loaded) return setError('Cannot load the desired map. The system will try to use the current map on Ohmni\'s local.');
       const { poses, metadata } = path;
       const trajectory = utils.smoothPath(poses).map((pose, i) => {
         let data = { editable: false, time: 0, velocity: 0, light: 0 }
@@ -88,7 +83,7 @@ class Editor extends Component {
         });
         return { ...pose, metadata: data }
       });
-      return this.setState({ trajectory, path });
+      return this.setState({ trajectory, path }, callback);
     }).catch(er => {
       return setError(er);
     });
@@ -108,16 +103,6 @@ class Editor extends Component {
       const image = canvas2Image(canvas);
       const map = { width, height, image, origin, resolution }
       return this.setState({ map });
-    });
-    // Bot
-    this.unsubscribeBot = ros.bot(msg => {
-      const { pose: { position: { x, y }, orientation } } = msg;
-      // Compute bot rotation
-      const quaternion = [orientation.x, orientation.y, orientation.z, orientation.w];
-      const [yaw] = qte(quaternion);
-      // Normalize bot position
-      const bot = { x, y, yaw }
-      return this.setState({ bot });
     });
     // Path
     // this.unsubscribePath = ros.path(msg => {
@@ -228,7 +213,7 @@ class Editor extends Component {
   render() {
     const { classes } = this.props;
     const { ui: { width } } = this.props;
-    const { trajectory, map, bot, anchorEl, selected, disabled } = this.state;
+    const { trajectory, map, anchorEl, selected, disabled } = this.state;
 
     const selectedNode = trajectory[selected] || { ...EMPTY_NODE }
 
@@ -256,8 +241,7 @@ class Editor extends Component {
               </Grid>
             </Grid>
             <Grid item xs={12}>
-              <Map map={map} flipped>
-                <Bot {...bot} r={width / 150} />
+              <Map map={map}>
                 {trajectory.map(({
                   position: { x, y },
                   metadata: { editable }

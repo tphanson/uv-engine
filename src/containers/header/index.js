@@ -19,7 +19,6 @@ import Button from '@material-ui/core/Button';
 import {
   MenuRounded, TimelineRounded, PersonRounded,
   ExitToAppRounded, LockRounded, MapRounded,
-  EditLocationRounded,
 } from '@material-ui/icons';
 
 import Card from 'components/card';
@@ -98,19 +97,13 @@ class Header extends Component {
                     <ListItemIcon>
                       <MapRounded />
                     </ListItemIcon>
-                    <ListItemText primary="Home" secondary="Map/Path selection" />
+                    <ListItemText primary="Home" secondary="Map/Path editor" />
                   </ListItem>
                   <ListItem button component={RouterLink} to={'/cleaning'}>
                     <ListItemIcon>
                       <TimelineRounded />
                     </ListItemIcon>
                     <ListItemText primary="Cleaning" secondary="Start & Monitor Ohmni in work" />
-                  </ListItem>
-                  <ListItem button component={RouterLink} to={'/editor'}>
-                    <ListItemIcon>
-                      <EditLocationRounded />
-                    </ListItemIcon>
-                    <ListItemText primary="Path Editor" />
                   </ListItem>
                   <Divider />
                   <ListItem classes={{ secondaryAction: classes.secondaryAction }}>
