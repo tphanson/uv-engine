@@ -120,14 +120,9 @@ class Cleaning extends Component {
         <Card className={classes.map}>
           <Grid container spacing={2}>
             <Grid item xs={12}>
-            </Grid>
-            <Grid item xs={12}>
               <Map map={map}>
                 <Bot {...bot} r={width / 150} />
-                {trajectory.map(({
-                  position: { x, y },
-                  metadata: { editable }
-                }, index) => {
+                {trajectory.map(({ position: { x, y }, metadata: { editable } }, index) => {
                   if (editable) return <POI key={index} x={x} y={y} r={width / 175} />
                   return <Point key={index} x={x} y={y} r={width / 500} />
                 })}
