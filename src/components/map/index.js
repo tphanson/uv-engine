@@ -193,23 +193,23 @@ class Map extends Component {
             <Arrow
               x={this.transform({ x: 0, y: 0 }).x}
               y={this.transform({ x: 0, y: 0 }).y}
-              points={[0, 0, 0, 15]}
+              points={[0, 0, 0, 10]}
               fill={theme.palette.grey[500]}
-              pointerLength={2}
-              pointerWidth={2}
+              pointerLength={1}
+              pointerWidth={1}
               stroke={theme.palette.grey[500]}
-              strokeWidth={2}
+              strokeWidth={1}
               lineJoin="round"
             />
             <Arrow
               x={this.transform({ x: 0, y: 0 }).x}
               y={this.transform({ x: 0, y: 0 }).y}
-              points={[0, 0, 15, 0]}
+              points={[0, 0, 10, 0]}
               fill={theme.palette.grey[500]}
-              pointerLength={2}
-              pointerWidth={2}
+              pointerLength={1}
+              pointerWidth={1}
               stroke={theme.palette.grey[500]}
-              strokeWidth={2}
+              strokeWidth={1}
               lineJoin="round"
             />
             {Children.map(children, child => cloneElement(child, {

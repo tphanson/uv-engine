@@ -75,12 +75,12 @@ export const GET_MAP = 'GET_MAP';
 export const GET_MAP_OK = 'GET_MAP_OK';
 export const GET_MAP_FAIL = 'GET_MAP_FAIL';
 
-export const getMap = (botId, mapId) => {
+export const getMap = (botId, mapId, pathId) => {
   return (dispatch, getState) => {
     return new Promise((resolve, reject) => {
       dispatch({ type: GET_MAP });
 
-      if (!botId || !mapId) {
+      if (!botId || !mapId || !pathId) {
         const er = 'Invalid inputs';
         dispatch({ type: GET_MAP_FAIL, reason: er });
         return reject(er);
@@ -113,7 +113,7 @@ export const getMap = (botId, mapId) => {
         }
 
         const { api: { localBot: { base } } } = configs;
-        return api.get(base + `/map`, { mapId, location })
+        return api.get(base + `/map`, { mapId, location, pathId })
       }).then(({ data }) => {
         dispatch({ type: GET_MAP_OK, data });
         return resolve(data);

@@ -6,11 +6,8 @@ import qte from 'quaternion-to-euler';
 
 import { withStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
-import Typography from '@material-ui/core/Typography';
-import ButtonGroup from '@material-ui/core/ButtonGroup';
 import Button from '@material-ui/core/Button';
-
-import { } from '@material-ui/icons';
+import Typography from '@material-ui/core/Typography';
 
 import Card from 'components/card';
 import Map from 'components/map';
@@ -37,6 +34,8 @@ class Cleaning extends Component {
       path: {},
       bot: {},
     }
+    const { api: { localBot: { rosbridge } } } = configs;
+    this.ros = new ROS(rosbridge);
   }
 
   componentDidMount() {
@@ -46,7 +45,6 @@ class Cleaning extends Component {
   componentWillUnmount() {
     if (this.unsubscribeMap) this.unsubscribeMap();
     if (this.unsubscribeBot) this.unsubscribeBot();
-    // this.unsubscribePath();
   }
 
   /**
@@ -59,7 +57,7 @@ class Cleaning extends Component {
       const { poses, metadata } = path;
       const trajectory = utils.smoothPath(poses).map((pose, i) => {
         let data = { editable: false, time: 0, velocity: 0, light: 0 }
-        metadata.forEach(({ index, ...others }) => {
+        if (metadata) metadata.forEach(({ index, ...others }) => {
           if (i === index) data = { editable: true, ...others }
         });
         return { ...pose, metadata: data }
@@ -71,10 +69,8 @@ class Cleaning extends Component {
   }
 
   onRos = () => {
-    const { api: { localBot: { rosbridge } } } = configs;
-    const ros = new ROS(rosbridge);
     // Map
-    this.unsubscribeMap = ros.map(msg => {
+    this.unsubscribeMap = this.ros.map(msg => {
       const {
         data,
         info: { width, height, resolution, origin: { position: { x, y } } }
@@ -86,7 +82,7 @@ class Cleaning extends Component {
       return this.setState({ map });
     });
     // Bot
-    this.unsubscribeBot = ros.bot(msg => {
+    this.unsubscribeBot = this.ros.bot(msg => {
       const { pose: { position: { x, y }, orientation } } = msg;
       // Compute bot rotation
       const quaternion = [orientation.x, orientation.y, orientation.z, orientation.w];
@@ -95,15 +91,14 @@ class Cleaning extends Component {
       const bot = { x, y, yaw }
       return this.setState({ bot });
     });
-    // Path
-    // this.unsubscribePath = ros.path(msg => {
-    //   const { poses } = msg;
-    //   const trajectory = poses.map(pose => {
-    //     const metadata = { editable: false, time: 0, velocity: 0, light: 0 }
-    //     return { ...pose, metadata }
-    //   }).filter((pose, index) => (index % 2 === 0)); // Reduce density
-    //   return this.setState({ trajectory });
-    // });
+  }
+
+  // This is an interface
+  // The real value will be added in onRos
+  onClean = () => {
+    return this.ros.startCleaning(re => {
+      console.log(re);
+    });
   }
 
   /**
@@ -117,14 +112,30 @@ class Cleaning extends Component {
 
     return <Grid container spacing={2}>
       <Grid item xs={12}>
+        <Grid container spacing={2} className={classes.noWrap} alignItems="center">
+          <Grid item className={classes.stretch}>
+            <Typography variant="h4">Cleaning Monitor</Typography>
+          </Grid>
+          <Grid item>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={this.onClean}
+            >
+              <Typography style={{ color: '#ffffff' }} variant="body2">Start</Typography>
+            </Button>
+          </Grid>
+        </Grid>
+      </Grid>
+      <Grid item xs={12}>
         <Card className={classes.map}>
           <Grid container spacing={2}>
             <Grid item xs={12}>
               <Map map={map}>
-                <Bot {...bot} r={width / 150} />
+                <Bot {...bot} r={width / 250} />
                 {trajectory.map(({ position: { x, y }, metadata: { editable } }, index) => {
-                  if (editable) return <POI key={index} x={x} y={y} r={width / 175} />
-                  return <Point key={index} x={x} y={y} r={width / 500} />
+                  if (editable) return <POI key={index} x={x} y={y} r={width / 500} />
+                  return <Point key={index} x={x} y={y} r={width / 1000} />
                 })}
               </Map>
             </Grid>

@@ -1,4 +1,4 @@
-import { Ros, Topic } from 'roslib';
+import { Ros, Topic, ActionClient, Goal } from 'roslib';
 
 
 class ROS {
@@ -51,6 +51,24 @@ class ROS {
       return callback(msg);
     });
     return botTopic.unsubscribe;
+  }
+
+  startCleaning = (callback = () => { }) => {
+    const cleaningAction = new ActionClient({
+      ros: this.ros,
+      serverName: '/LUVcontroller',
+      actionName: 'path_msgs/LUVControllerAction'
+    });
+    const goal = new Goal({
+      actionClient: cleaningAction,
+      goalMessage: {
+        start_controller: true
+      }
+    });
+    goal.on('result', function (response) {
+      return callback(response);
+    });
+    return goal.send();
   }
 }
 

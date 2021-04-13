@@ -28,10 +28,9 @@ class Bot extends Component {
   }
 
   onStyles = () => {
-    const { theme } = this.props;
     const styles = {
-      fill: theme.palette.secondary.main,
-      shadowColor: theme.palette.secondary.main,
+      fill: '#ff9292',
+      shadowColor: '#ff9292',
       shadowOffsetX: 0,
       shadowOffsetY: 6,
       shadowBlur: 10,

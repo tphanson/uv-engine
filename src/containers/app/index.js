@@ -42,7 +42,7 @@ class App extends Component {
             <Redirect exact from="/" to="/home" />
             <Route exact path='/auth' component={Auth} />
             <PrivateRoute exact path='/home' component={Home} />
-            <PrivateRoute exact path='/editor/:botId/:mapId' component={Editor} />
+            <PrivateRoute exact path='/editor/:botId/:mapId/:pathId' component={Editor} />
             <PrivateRoute exact path='/cleaning' component={Cleaning} />
             <Route path='*' component={NotFound} />
           </Switch>

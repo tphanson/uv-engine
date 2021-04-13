@@ -66,14 +66,18 @@ class Editor extends Component {
    */
 
   parseParams = () => {
-    const { match: { params: { botId, mapId } } } = this.props;
-    return { botId, mapId };
+    const { match: { params: { botId, mapId, pathId } } } = this.props;
+    return {
+      botId: decodeURIComponent(botId),
+      mapId: decodeURIComponent(mapId),
+      pathId: decodeURIComponent(pathId)
+    };
   }
 
   loadData = (callback = () => { }) => {
     const { getMap, setError } = this.props;
-    const { botId, mapId } = this.parseParams();
-    return getMap(botId, mapId).then(({ loaded, path }) => {
+    const { botId, mapId, pathId } = this.parseParams();
+    return getMap(botId, mapId, pathId).then(({ loaded, path }) => {
       if (!loaded) return setError('Cannot load the desired map. The system will try to use the current map on Ohmni\'s local.');
       const { poses, metadata } = path;
       const trajectory = utils.smoothPath(poses).map((pose, i) => {
@@ -82,7 +86,7 @@ class Editor extends Component {
         if (i === 0) data = { editable: true, time: 0, velocity: 0.018, light: 2000 }
         if (i === poses.length - 1) data = { editable: true, time: 0, velocity: 0.018, light: 2000 }
         // Load saved segments
-        metadata.forEach(({ index, ...others }) => {
+        if (metadata) metadata.forEach(({ index, ...others }) => {
           if (i === index) data = { editable: true, ...others }
         });
         return { ...pose, metadata: data }
@@ -223,27 +227,34 @@ class Editor extends Component {
 
     return <Grid container spacing={2}>
       <Grid item xs={12}>
-        <Card className={classes.map}>
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <Grid container spacing={2} alignItems="center" className={classes.noWrap} justify="flex-end">
-                <Grid item>
-                  <ButtonGroup size="small" >
-                    <Button disabled={disabled.disabledUndo} onClick={this.undo} startIcon={<UndoRounded />}>
-                      <Typography>Undo</Typography>
-                    </Button>
-                    <Button disabled={disabled.disabledRedo} onClick={this.redo} startIcon={<RedoRounded />}>
-                      <Typography>Redo</Typography>
-                    </Button>
-                  </ButtonGroup>
-                </Grid>
-                <Grid item>
-                  <Button variant="contained" color="primary" onClick={this.onSave}>
-                    <Typography style={{ color: '#ffffff' }} variant="body2">Save</Typography>
+        <Grid container spacing={2} className={classes.noWrap} alignItems="center">
+          <Grid item className={classes.stretch}>
+            <Typography variant="h4">Path Editor</Typography>
+          </Grid>
+          <Grid item>
+            <Grid container spacing={2} alignItems="center" className={classes.noWrap} justify="flex-end">
+              <Grid item>
+                <ButtonGroup size="small" >
+                  <Button disabled={disabled.disabledUndo} onClick={this.undo} startIcon={<UndoRounded />}>
+                    <Typography>Undo</Typography>
                   </Button>
-                </Grid>
+                  <Button disabled={disabled.disabledRedo} onClick={this.redo} startIcon={<RedoRounded />}>
+                    <Typography>Redo</Typography>
+                  </Button>
+                </ButtonGroup>
+              </Grid>
+              <Grid item>
+                <Button variant="contained" color="primary" onClick={this.onSave}>
+                  <Typography style={{ color: '#ffffff' }} variant="body2">Save</Typography>
+                </Button>
               </Grid>
             </Grid>
+          </Grid>
+        </Grid>
+      </Grid>
+      <Grid item xs={12}>
+        <Card className={classes.map}>
+          <Grid container spacing={2}>
             <Grid item xs={12}>
               <Map map={map}>
                 {trajectory.map(({

@@ -32,7 +32,8 @@ class Home extends Component {
       botId: '',
       localMaps: [],
       groupedMaps: [],
-      mapId: ''
+      mapId: '',
+      pathId: ''
     }
   }
 
@@ -51,7 +52,10 @@ class Home extends Component {
       mapId = re;
       return getMaps(botId);
     }).then(data => {
-      return this.setState({ ...data, botId, mapId });
+      return this.setState({ ...data, botId }, () => {
+        const pseudoEvent = { target: { value: mapId } }
+        return this.onPlan(pseudoEvent);
+      });
     }).catch(er => {
       return setError(er);
     });
@@ -59,12 +63,21 @@ class Home extends Component {
 
   onPlan = (e) => {
     const mapId = e.target.value || '';
-    return this.setState({ mapId });
+    const { groupedMaps, localMaps } = this.state;
+    const [map] = groupedMaps.concat(localMaps).filter(({ _id }) => _id === mapId);
+    const { path: pathId } = map || {}
+    if (!pathId) return this.setState({ mapId: '', pathId: '' });
+    return this.setState({ mapId, pathId });
+  }
+
+  encodeParams = (botId, mapId, pathId) => {
+    if (!botId || !mapId || !pathId) return '#';
+    return `/editor/${encodeURIComponent(botId)}/${encodeURIComponent(mapId)}/${encodeURIComponent(pathId)}`;
   }
 
   render() {
     const { classes } = this.props;
-    const { botId, localMaps, groupedMaps, mapId } = this.state;
+    const { botId, localMaps, groupedMaps, mapId, pathId } = this.state;
 
     return <Grid container spacing={2}>
       <Grid item xs={12}>
@@ -81,15 +94,17 @@ class Home extends Component {
             onChange={this.onPlan}
           >
             <ListSubheader>Local maps</ListSubheader>
-            {localMaps.length ? localMaps.map(({ _id, name }) => <MenuItem
+            {localMaps.length ? localMaps.map(({ _id, name, path }) => <MenuItem
               key={_id}
               value={_id}
+              disabled={!path}
             >{name}</MenuItem>) : <ListSubheader>No data</ListSubheader>}
             <Divider />
             <ListSubheader>Group maps</ListSubheader>
-            {groupedMaps.length ? groupedMaps.map(({ _id, name }) => <MenuItem
+            {groupedMaps.length ? groupedMaps.map(({ _id, name, path }) => <MenuItem
               key={_id}
               value={_id}
+              disabled={!path}
             >{name}</MenuItem>) : <ListSubheader>No data</ListSubheader>}
           </Select>
         </FormControl>
@@ -100,7 +115,7 @@ class Home extends Component {
             <Button
               color="primary"
               component={RouteLink}
-              to={mapId ? `/editor/${botId}/${mapId}` : '#'}
+              to={this.encodeParams(botId, mapId, pathId)}
               startIcon={<EditLocationRounded />}
             >
               <Typography>Edit map</Typography>
@@ -112,9 +127,9 @@ class Home extends Component {
               color="primary"
               component={RouteLink}
               to={mapId ? `/cleaning/${botId}/${mapId}` : '#'}
-              endIcon={<ArrowForwardIosRounded />}
+              endIcon={<ArrowForwardIosRounded style={{ color: '#ffffff' }} />}
             >
-              <Typography>Start cleaning</Typography>
+              <Typography style={{ color: '#ffffff' }} variant="body2">Start cleaning</Typography>
             </Button>
           </Grid>
         </Grid>

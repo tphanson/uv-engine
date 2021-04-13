@@ -3,6 +3,8 @@
  */
 const configs = {}
 
+const { location: { hostname } } = window;
+
 /**
  * Development configurations
  */
@@ -11,8 +13,8 @@ configs.development = {
     base: 'https://api-branch.ohmnilabs.com',
   },
   localBot: {
-    base: 'http://192.168.123.34:3001',
-    rosbridge: 'ws://192.168.123.34:9090',
+    base: 'http://192.168.123.41:3001',
+    rosbridge: 'ws://192.168.123.41:9090',
   }
 }
 
@@ -24,8 +26,8 @@ configs.staging = {
     base: 'https://api-branch.ohmnilabs.com',
   },
   localBot: {
-    base: 'http://localhost:3001',
-    rosbridge: 'ws://192.168.123.30:9090',
+    base: `http://${hostname}:3001`,
+    rosbridge: `ws://${hostname}:9090`,
   }
 }
 
@@ -37,8 +39,8 @@ configs.production = {
     base: 'https://api-branch.ohmnilabs.com',
   },
   localBot: {
-    base: 'http://localhost:3001',
-    rosbridge: 'ws://192.168.123.30:9090',
+    base: `http://${hostname}:3001`,
+    rosbridge: `ws://${hostname}:9090`,
   }
 }
 
