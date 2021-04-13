@@ -93,9 +93,8 @@ class Cleaning extends Component {
     });
   }
 
-  // This is an interface
-  // The real value will be added in onRos
   onClean = () => {
+    console.log('onClean')
     return this.ros.startCleaning(re => {
       console.log(re);
     });
@@ -104,7 +103,6 @@ class Cleaning extends Component {
   /**
    * Render
    */
-
   render() {
     const { classes } = this.props;
     const { ui: { width } } = this.props;
@@ -132,11 +130,11 @@ class Cleaning extends Component {
           <Grid container spacing={2}>
             <Grid item xs={12}>
               <Map map={map}>
-                <Bot {...bot} r={width / 250} />
                 {trajectory.map(({ position: { x, y }, metadata: { editable } }, index) => {
                   if (editable) return <POI key={index} x={x} y={y} r={width / 500} />
                   return <Point key={index} x={x} y={y} r={width / 1000} />
                 })}
+                <Bot {...bot} r={width / 250} />
               </Map>
             </Grid>
           </Grid>

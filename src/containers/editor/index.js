@@ -46,10 +46,14 @@ class Editor extends Component {
       }
     }
 
+    // Editing History
     this.history = new History([]);
     this.history.watch(disabled => {
       return this.setState({ disabled });
     });
+    // ROS
+    const { api: { localBot: { rosbridge } } } = configs;
+    this.ros = new ROS(rosbridge);
   }
 
   componentDidMount() {
@@ -98,10 +102,8 @@ class Editor extends Component {
   }
 
   onRos = () => {
-    const { api: { localBot: { rosbridge } } } = configs;
-    const ros = new ROS(rosbridge);
     // Map
-    this.unsubscribeMap = ros.map(msg => {
+    this.unsubscribeMap = this.ros.map(msg => {
       const {
         data,
         info: { width, height, resolution, origin: { position: { x, y } } }
@@ -113,7 +115,7 @@ class Editor extends Component {
       return this.setState({ map });
     });
     // Path
-    // this.unsubscribePath = ros.path(msg => {
+    // this.unsubscribePath = this.ros.path(msg => {
     //   const { poses } = msg;
     //   const trajectory = poses.map(pose => {
     //     const metadata = { editable: false, time: 0, velocity: 0, light: 0 }
@@ -217,7 +219,6 @@ class Editor extends Component {
   /**
    * Render
    */
-
   render() {
     const { classes } = this.props;
     const { ui: { width } } = this.props;

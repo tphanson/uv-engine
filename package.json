@@ -36,7 +36,7 @@
     "build": "react-scripts build",
     "prod": "REACT_APP_ENV=production react-scripts build",
     "test": "react-scripts test",
-    "serve": "serve -s build -l 3000",
+    "serve": "npm run prod && serve -s build -l 3000",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

@@ -54,12 +54,12 @@ class ROS {
   }
 
   startCleaning = (callback = () => { }) => {
-    const cleaningAction = new ActionClient({
+    let cleaningAction = new ActionClient({
       ros: this.ros,
       serverName: '/LUVcontroller',
       actionName: 'path_msgs/LUVControllerAction'
     });
-    const goal = new Goal({
+    let goal = new Goal({
       actionClient: cleaningAction,
       goalMessage: {
         start_controller: true
@@ -67,7 +67,9 @@ class ROS {
     });
     goal.on('result', function (response) {
       return callback(response);
+      // return cleaningAction.dispose();
     });
+    console.log(goal)
     return goal.send();
   }
 }

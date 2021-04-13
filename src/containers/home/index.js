@@ -15,9 +15,7 @@ import ListSubheader from '@material-ui/core/ListSubheader';
 import Divider from '@material-ui/core/Divider';
 
 
-import {
-  ArrowForwardIosRounded, EditLocationRounded,
-} from '@material-ui/icons';
+import { EditLocationRounded } from '@material-ui/icons';
 
 import styles from './styles';
 import { setError } from 'modules/ui.reducer';
@@ -113,23 +111,13 @@ class Home extends Component {
         <Grid container spacing={2} className={classes.noWrap} justify="flex-end">
           <Grid item>
             <Button
-              color="primary"
-              component={RouteLink}
-              to={this.encodeParams(botId, mapId, pathId)}
-              startIcon={<EditLocationRounded />}
-            >
-              <Typography>Edit map</Typography>
-            </Button>
-          </Grid>
-          <Grid item>
-            <Button
               variant="contained"
               color="primary"
               component={RouteLink}
-              to={mapId ? `/cleaning/${botId}/${mapId}` : '#'}
-              endIcon={<ArrowForwardIosRounded style={{ color: '#ffffff' }} />}
+              to={this.encodeParams(botId, mapId, pathId)}
+              startIcon={<EditLocationRounded style={{ color: '#ffffff' }} />}
             >
-              <Typography style={{ color: '#ffffff' }} variant="body2">Start cleaning</Typography>
+              <Typography style={{ color: '#ffffff' }} variant="body2">Edit map</Typography>
             </Button>
           </Grid>
         </Grid>
