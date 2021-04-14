@@ -96,7 +96,6 @@ class Cleaning extends Component {
   }
 
   onClean = () => {
-    console.log('onClean')
     return this.setState({ loading: true }, () => {
       return this.ros.startCleaning(re => {
         return this.setState({ loading: false });
