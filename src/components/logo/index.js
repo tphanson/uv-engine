@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { Link as RouteLink } from 'react-router-dom';
 
 import { withStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
@@ -15,7 +16,7 @@ class Logo extends Component {
     const { classes } = this.props;
 
     return <Grid container spacing={2}>
-      <Grid item className={classes.logo} >
+      <Grid item className={classes.logo} component={RouteLink} to="/home" >
         <Image src={logo} aspectRatio={300 / 177} />
       </Grid>
     </Grid>
