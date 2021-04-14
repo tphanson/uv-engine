@@ -54,12 +54,12 @@ class ROS {
   }
 
   startCleaning = (callback = () => { }) => {
-    let cleaningAction = new ActionClient({
+    const cleaningAction = new ActionClient({
       ros: this.ros,
       serverName: '/LUVcontroller',
       actionName: 'path_msgs/LUVControllerAction'
     });
-    let goal = new Goal({
+    const goal = new Goal({
       actionClient: cleaningAction,
       goalMessage: {
         start_controller: true
@@ -67,7 +67,21 @@ class ROS {
     });
     goal.on('result', function (response) {
       cleaningAction.dispose();
-      return callback(response);
+      const { result_id } = response || {}
+      // uint8 PENDING=0
+      // uint8 ACTIVE=1
+      // uint8 PREEMPTED=2
+      // uint8 SUCCEEDED=3
+      // uint8 ABORTED=4
+      // uint8 REJECTED=5
+      // uint8 PREEMPTING=6
+      // uint8 RECALLING=7
+      // uint8 RECALLED=8
+      // uint8 LOST=9
+      if (!result_id) return callback('ROS has no response', null);
+      if (result_id === 4) return callback('Sequence aborted', null);
+      if (result_id === 5) return callback('Failed to start', null);
+      return callback(null, response);
     });
     return goal.send();
   }

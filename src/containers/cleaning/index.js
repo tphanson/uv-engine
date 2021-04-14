@@ -96,8 +96,12 @@ class Cleaning extends Component {
   }
 
   onClean = () => {
+    const { setError } = this.props;
     return this.setState({ loading: true }, () => {
-      return this.ros.startCleaning(re => {
+      return this.ros.startCleaning((er, re) => {
+        if (er) return this.setState({ loading: false }, () => {
+          return setError(er);
+        });
         return this.setState({ loading: false });
       });
     });
