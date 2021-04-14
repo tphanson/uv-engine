@@ -9,8 +9,9 @@ import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import ButtonGroup from '@material-ui/core/ButtonGroup';
 import Button from '@material-ui/core/Button';
+import CircularProgress from '@material-ui/core/CircularProgress';
 
-import { UndoRounded, RedoRounded } from '@material-ui/icons';
+import { UndoRounded, RedoRounded, GestureRounded } from '@material-ui/icons';
 
 import Card from 'components/card';
 import Map from 'components/map';
@@ -36,6 +37,7 @@ class Editor extends Component {
 
     this.state = {
       anchorEl: virtualEl(),
+      loading: false,
       selected: -1,
       trajectory: [],
       map: {},
@@ -46,11 +48,6 @@ class Editor extends Component {
       }
     }
 
-    // Editing History
-    this.history = new History([]);
-    this.history.watch(disabled => {
-      return this.setState({ disabled });
-    });
     // ROS
     const { api: { localBot: { rosbridge } } } = configs;
     this.ros = new ROS(rosbridge);
@@ -84,7 +81,7 @@ class Editor extends Component {
     return getMap(botId, mapId, pathId).then(({ loaded, path }) => {
       if (!loaded) return setError('Cannot load the desired map. The system will try to use the current map on Ohmni\'s local.');
       const { poses, metadata } = path;
-      const trajectory = utils.smoothPath(poses).map((pose, i) => {
+      const trajectory = poses.map((pose, i) => {
         let data = { editable: false, time: 0, velocity: 0, light: 0 }
         // Make sure always there is one segment at least
         if (i === 0) data = { editable: true, time: 0, velocity: 0.018, light: 2000 }
@@ -95,7 +92,15 @@ class Editor extends Component {
         });
         return { ...pose, metadata: data }
       });
-      return this.setState({ trajectory, path }, callback);
+      return this.setState({ trajectory, path }, () => {
+        // Editing History
+        this.history = new History(trajectory);
+        this.history.watch(disabled => {
+          return this.setState({ disabled });
+        });
+        // Callback
+        return callback();
+      });
     }).catch(er => {
       return setError(er);
     });
@@ -147,6 +152,12 @@ class Editor extends Component {
   /**
    * Map iteraction
    */
+
+  onSmooth = () => {
+    const { trajectory } = this.state;
+    const newTrajectory = utils.smoothPath(trajectory);
+    return this.setState({ trajectory: newTrajectory }, this.onHistory);
+  }
 
   onChange = (index, pos) => {
     const { trajectory } = this.state;
@@ -207,12 +218,19 @@ class Editor extends Component {
       return data;
     });
     const newPath = dcp(path);
+    newPath.poses = trajectory;
     newPath.metadata = metadata;
     const { mapId } = this.parseParams();
-    return savePath(mapId, newPath).then(re => {
-      console.log(re);
-    }).catch(er => {
-      return setError(er);
+    return this.setState({ loading: true }, () => {
+      return savePath(mapId, newPath).then(re => {
+        return this.loadData(() => {
+          return this.setState({ loading: false });
+        });
+      }).catch(er => {
+        return this.setState({ loading: false }, () => {
+          return setError(er);
+        });
+      });
     });
   }
 
@@ -222,9 +240,10 @@ class Editor extends Component {
   render() {
     const { classes } = this.props;
     const { ui: { width } } = this.props;
-    const { trajectory, map, anchorEl, selected, disabled } = this.state;
+    const { loading, path, trajectory, map, anchorEl, selected, disabled } = this.state;
 
     const selectedNode = trajectory[selected] || { ...EMPTY_NODE }
+    const poses = path.poses || []
 
     return <Grid container spacing={2}>
       <Grid item xs={12}>
@@ -234,6 +253,11 @@ class Editor extends Component {
           </Grid>
           <Grid item>
             <Grid container spacing={2} alignItems="center" className={classes.noWrap} justify="flex-end">
+              <Grid item>
+                <Button variant="outlined" onClick={this.onSmooth} startIcon={<GestureRounded />} >
+                  <Typography>Smooth Path</Typography>
+                </Button>
+              </Grid>
               <Grid item>
                 <ButtonGroup size="small" >
                   <Button disabled={disabled.disabledUndo} onClick={this.undo} startIcon={<UndoRounded />}>
@@ -245,7 +269,13 @@ class Editor extends Component {
                 </ButtonGroup>
               </Grid>
               <Grid item>
-                <Button variant="contained" color="primary" onClick={this.onSave}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={this.onSave}
+                  startIcon={loading ? <CircularProgress size={17} /> : null}
+                  disabled={loading}
+                >
                   <Typography style={{ color: '#ffffff' }} variant="body2">Save</Typography>
                 </Button>
               </Grid>
@@ -258,6 +288,13 @@ class Editor extends Component {
           <Grid container spacing={2}>
             <Grid item xs={12}>
               <Map map={map}>
+                {poses.map(({ position: { x, y } }, index) => <Point
+                  key={index}
+                  variant="secondary"
+                  x={x}
+                  y={y}
+                  r={width / 2000}
+                />)}
                 {trajectory.map(({
                   position: { x, y },
                   metadata: { editable }
@@ -266,7 +303,7 @@ class Editor extends Component {
                     key={index}
                     x={x}
                     y={y}
-                    r={width / 175}
+                    r={width / 500}
                     onClick={(e) => this.onClick(e, index)}
                     onChange={pos => this.onChange(index, pos)}
                   />
@@ -274,7 +311,7 @@ class Editor extends Component {
                     key={index}
                     x={x}
                     y={y}
-                    r={width / 500}
+                    r={width / 1000}
                     onClick={(e) => this.onClick(e, index)}
                   />
                 })}

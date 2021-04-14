@@ -27,9 +27,12 @@ class Point extends Component {
   }
 
   onStyles = () => {
-    const { theme } = this.props;
-    const styles = {
+    const { theme, variant } = this.props;
+    const styles = variant === 'primary' ? {
       fill: theme.palette.secondary.light,
+    } : {
+      fill: '#ff9292',
+      opacity: 0.5
     }
     return styles;
   }
@@ -65,6 +68,7 @@ class Point extends Component {
 }
 
 Point.defaultProps = {
+  variant: "primary",
   r: 10,
   x: 0,
   y: 0,
@@ -74,6 +78,7 @@ Point.defaultProps = {
 }
 
 Point.propTypes = {
+  variant: PropTypes.oneOf(['primary', 'secondary']),
   r: PropTypes.number,
   x: PropTypes.number,
   y: PropTypes.number,

@@ -66,10 +66,9 @@ class ROS {
       }
     });
     goal.on('result', function (response) {
+      cleaningAction.dispose();
       return callback(response);
-      // return cleaningAction.dispose();
     });
-    console.log(goal)
     return goal.send();
   }
 }

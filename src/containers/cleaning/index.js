@@ -8,6 +8,7 @@ import { withStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
+import CircularProgress from '@material-ui/core/CircularProgress';
 
 import Card from 'components/card';
 import Map from 'components/map';
@@ -29,6 +30,7 @@ class Cleaning extends Component {
     super();
 
     this.state = {
+      loading: false,
       trajectory: [],
       map: {},
       path: {},
@@ -95,8 +97,10 @@ class Cleaning extends Component {
 
   onClean = () => {
     console.log('onClean')
-    return this.ros.startCleaning(re => {
-      console.log(re);
+    return this.setState({ loading: true }, () => {
+      return this.ros.startCleaning(re => {
+        return this.setState({ loading: false });
+      });
     });
   }
 
@@ -106,7 +110,7 @@ class Cleaning extends Component {
   render() {
     const { classes } = this.props;
     const { ui: { width } } = this.props;
-    const { trajectory, map, bot } = this.state;
+    const { trajectory, map, bot, loading } = this.state;
 
     return <Grid container spacing={2}>
       <Grid item xs={12}>
@@ -119,8 +123,10 @@ class Cleaning extends Component {
               variant="contained"
               color="primary"
               onClick={this.onClean}
+              startIcon={loading ? <CircularProgress size={17} /> : null}
+              disabled={loading}
             >
-              <Typography style={{ color: '#ffffff' }} variant="body2">Start</Typography>
+              <Typography style={{ color: '#ffffff' }} variant="body2">{loading ? 'Cleaning' : 'Start'}</Typography>
             </Button>
           </Grid>
         </Grid>
