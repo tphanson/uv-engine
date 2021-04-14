@@ -4,7 +4,6 @@
 const configs = {}
 
 const { location: { hostname } } = window;
-const { env: { WAPP_API_PORT } } = process;
 
 /**
  * Development configurations
@@ -27,7 +26,7 @@ configs.staging = {
     base: 'https://api-branch.ohmnilabs.com',
   },
   localBot: {
-    base: `http://${hostname}:${WAPP_API_PORT}`,
+    base: `http://${hostname}:3001`,
     rosbridge: `ws://${hostname}:9090`,
   }
 }
@@ -40,7 +39,7 @@ configs.production = {
     base: 'https://api-branch.ohmnilabs.com',
   },
   localBot: {
-    base: `http://${hostname}:${WAPP_API_PORT}`,
+    base: `http://${hostname}:3001`,
     rosbridge: `ws://${hostname}:9090`,
   }
 }
