@@ -29,12 +29,18 @@ export const checkLogin = () => {
 
       if (!username || !token) {
         const er = 'Empty username/token';
-        dispatch({ type: CHECK_LOGIN_FAIL, reason: er });
+        dispatch({ type: CHECK_LOGIN_FAIL, data: { ...defaultState }, reason: er });
         return reject(er);
       }
 
-      dispatch({ type: CHECK_LOGIN_OK, data: { logged: true, username } });
-      return resolve({ username });
+      const { api: { cloud: { base } } } = configs;
+      return api.post(base + '/app/verify_token').then(({ data }) => {
+        dispatch({ type: CHECK_LOGIN_OK, data: { logged: true, username } });
+        return resolve({ username });
+      }).catch(er => {
+        dispatch({ type: CHECK_LOGIN_FAIL, data: { ...defaultState }, reason: er.toString() });
+        return reject(er);
+      });
     });
   }
 }
