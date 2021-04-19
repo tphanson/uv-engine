@@ -3,13 +3,13 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { withRouter } from 'react-router-dom';
 import dcp from 'deepcopy';
+import qte from 'quaternion-to-euler';
 
 import { withStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import ButtonGroup from '@material-ui/core/ButtonGroup';
 import Button from '@material-ui/core/Button';
-import CircularProgress from '@material-ui/core/CircularProgress';
 
 import { UndoRounded, RedoRounded, GestureRounded } from '@material-ui/icons';
 
@@ -17,7 +17,10 @@ import Card from 'components/card';
 import Map from 'components/map';
 import POI from 'components/poi';
 import Point from 'components/point';
+import Bot from 'components/bot';
 import Action, { virtualEl } from './action';
+import Save from './save';
+import Settings from './settings';
 
 import styles from './styles';
 import configs from 'configs';
@@ -42,9 +45,15 @@ class Editor extends Component {
       trajectory: [],
       map: {},
       path: {},
+      bot: {},
       disabled: {
         disabledUndo: true,
         disabledRedo: true,
+      },
+      settings: {
+        angled: false,
+        trace: true,
+        bot: false
       }
     }
 
@@ -59,7 +68,7 @@ class Editor extends Component {
 
   componentWillUnmount() {
     if (this.unsubscribeMap) this.unsubscribeMap();
-    // if (this.unsubscribeMap) this.unsubscribePath();
+    if (this.unsubscribeBot) this.unsubscribeBot();
   }
 
   /**
@@ -119,15 +128,16 @@ class Editor extends Component {
       const map = { width, height, image, origin, resolution }
       return this.setState({ map });
     });
-    // Path
-    // this.unsubscribePath = this.ros.path(msg => {
-    //   const { poses } = msg;
-    //   const trajectory = poses.map(pose => {
-    //     const metadata = { editable: false, time: 0, velocity: 0, light: 0 }
-    //     return { ...pose, metadata }
-    //   }).filter((pose, index) => (index % 2 === 0)); // Reduce density
-    //   return this.setState({ trajectory });
-    // });
+    // Bot
+    this.unsubscribeBot = this.ros.bot(msg => {
+      const { pose: { position: { x, y }, orientation } } = msg;
+      // Compute bot rotation
+      const quaternion = [orientation.x, orientation.y, orientation.z, orientation.w];
+      const [yaw] = qte(quaternion);
+      // Normalize bot position
+      const bot = { x, y, yaw }
+      return this.setState({ bot });
+    });
   }
 
   /**
@@ -149,13 +159,17 @@ class Editor extends Component {
     return this.setState({ trajectory: newTrajectory });
   }
 
+  onSettings = (settings) => {
+    return this.setState({ settings });
+  }
+
   /**
    * Map iteraction
    */
 
   onSmooth = () => {
     const { trajectory } = this.state;
-    const newTrajectory = utils.smoothPath(trajectory);
+    const newTrajectory = utils.smoothPosition(trajectory);
     return this.setState({ trajectory: newTrajectory }, this.onHistory);
   }
 
@@ -205,7 +219,7 @@ class Editor extends Component {
     return this.setState({ trajectory: newTrajectory }, this.onHistory);
   }
 
-  onSave = () => {
+  onSave = (callback = () => { }) => {
     const { savePath, setError } = this.props;
     const { path, trajectory } = this.state;
     const metadata = trajectory.map((point, index) => {
@@ -224,7 +238,7 @@ class Editor extends Component {
     return this.setState({ loading: true }, () => {
       return savePath(mapId, newPath).then(re => {
         return this.loadData(() => {
-          return this.setState({ loading: false });
+          return this.setState({ loading: false }, callback);
         });
       }).catch(er => {
         return this.setState({ loading: false }, () => {
@@ -234,16 +248,26 @@ class Editor extends Component {
     });
   }
 
+  onTest = () => {
+    return this.onSave(() => {
+      const { history } = this.props;
+      return history.push('/cleaning');
+    });
+  }
+
   /**
    * Render
    */
   render() {
     const { classes } = this.props;
     const { ui: { width } } = this.props;
-    const { loading, path, trajectory, map, anchorEl, selected, disabled } = this.state;
+    const {
+      loading, path, trajectory, map, settings,
+      anchorEl, selected, disabled, bot
+    } = this.state;
 
     const selectedNode = trajectory[selected] || { ...EMPTY_NODE }
-    const poses = path.poses || []
+    const poses = path.poses || [];
 
     return <Grid container spacing={2}>
       <Grid item xs={12}>
@@ -252,34 +276,32 @@ class Editor extends Component {
             <Typography variant="h4">Path Editor</Typography>
           </Grid>
           <Grid item>
-            <Grid container spacing={2} alignItems="center" className={classes.noWrap} justify="flex-end">
-              <Grid item>
-                <Button variant="outlined" onClick={this.onSmooth} startIcon={<GestureRounded />} >
-                  <Typography>Smooth Path</Typography>
-                </Button>
-              </Grid>
-              <Grid item>
-                <ButtonGroup size="small" >
-                  <Button disabled={disabled.disabledUndo} onClick={this.undo} startIcon={<UndoRounded />}>
-                    <Typography>Undo</Typography>
-                  </Button>
-                  <Button disabled={disabled.disabledRedo} onClick={this.redo} startIcon={<RedoRounded />}>
-                    <Typography>Redo</Typography>
-                  </Button>
-                </ButtonGroup>
-              </Grid>
-              <Grid item>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={this.onSave}
-                  startIcon={loading ? <CircularProgress size={17} /> : null}
-                  disabled={loading}
-                >
-                  <Typography style={{ color: '#ffffff' }} variant="body2">Save</Typography>
-                </Button>
-              </Grid>
-            </Grid>
+            <Button variant="outlined" onClick={this.onSmooth} startIcon={<GestureRounded />} >
+              <Typography>Smooth Path</Typography>
+            </Button>
+          </Grid>
+          <Grid item>
+            <ButtonGroup >
+              <Button disabled={disabled.disabledUndo} onClick={this.undo} startIcon={<UndoRounded />}>
+                <Typography>Undo</Typography>
+              </Button>
+              <Button disabled={disabled.disabledRedo} onClick={this.redo} startIcon={<RedoRounded />}>
+                <Typography>Redo</Typography>
+              </Button>
+            </ButtonGroup>
+          </Grid>
+          <Grid item>
+            <Save
+              loading={loading}
+              onSave={this.onSave}
+              onSaveAndTest={this.onTest}
+            />
+          </Grid>
+          <Grid item>
+            <Settings
+              value={settings}
+              onChange={this.onSettings}
+            />
           </Grid>
         </Grid>
       </Grid>
@@ -288,17 +310,24 @@ class Editor extends Component {
           <Grid container spacing={2}>
             <Grid item xs={12}>
               <Map map={map}>
-                {poses.map(({ position: { x, y } }, index) => <Point
+                {/* Tracing points */}
+                {settings.trace ? poses.map(({ position: { x, y } }, index) => <Point
                   key={index}
                   variant="secondary"
                   x={x}
                   y={y}
                   r={width / 2000}
-                />)}
+                />) : null}
+                {/* Bot */}
+                {settings.bot ? <Bot {...bot} r={width / 250} /> : null}
+                {/* Current path */}
                 {trajectory.map(({
                   position: { x, y },
-                  metadata: { editable }
+                  metadata: { editable },
+                  orientation,
                 }, index) => {
+                  const quaternion = [orientation.x, orientation.y, orientation.z, orientation.w];
+                  const [yaw] = qte(quaternion);
                   if (editable) return <POI
                     key={index}
                     x={x}
@@ -311,8 +340,10 @@ class Editor extends Component {
                     key={index}
                     x={x}
                     y={y}
+                    yaw={yaw}
                     r={width / 1000}
                     onClick={(e) => this.onClick(e, index)}
+                    angled={settings.angled}
                   />
                 })}
               </Map>

@@ -175,9 +175,11 @@ class Map extends Component {
   // }
 
   render() {
-    const { children, theme } = this.props;
+    const { children: rawChildren, theme } = this.props;
     const { ratio, wide } = this.state;
+
     const boundary = [0, 0, wide, wide / ratio];
+    const children = rawChildren.filter(child => Boolean(child));
 
     return <Grid container spacing={2}>
       <Grid item xs={12} id="container">

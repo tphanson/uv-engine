@@ -10,17 +10,6 @@ class Bot extends Component {
     this.ref = createRef();
   }
 
-  componentDidMount() {
-    return this.setInfo();
-  }
-
-  setInfo = () => {
-    const { x, y, r, transform } = this.props;
-    this.ref.current.x(transform({ x, y }).x);
-    this.ref.current.y(transform({ x, y }).y);
-    this.ref.current.radius(r);
-  }
-
   onCursor = (type) => {
     const types = ['default', 'pointer'];
     if (!types.includes(type)) type = 'default';
@@ -30,6 +19,7 @@ class Bot extends Component {
   onStyles = () => {
     const styles = {
       fill: '#ff9292',
+      opacity: 0.5,
       shadowColor: '#ff9292',
       shadowOffsetX: 0,
       shadowOffsetY: 6,
@@ -85,6 +75,13 @@ class Bot extends Component {
         radius={r}
         {...this.onStyles()}
         {...this.onEvents()}
+      />
+      <Circle
+        x={transform({ x, y }).x}
+        y={transform({ x, y }).y}
+        radius={r / 2}
+        fill="#ff9292"
+        opacity={0.75}
       />
     </Fragment>
   }

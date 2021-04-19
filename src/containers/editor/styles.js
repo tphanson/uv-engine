@@ -20,4 +20,7 @@ export default theme => ({
   map: {
     // background: theme.palette.grey['A700']
   },
+  secondaryAction: {
+    paddingRight: theme.spacing(16)
+  }
 });

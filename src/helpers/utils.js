@@ -9,7 +9,7 @@ utils.prettyNumber = (n) => {
   return n;
 }
 
-utils.smoothPath = (poses, gamma = 0.7) => {
+utils.smoothPosition = (poses, gamma = 0.7) => {
   let v0 = null;
   const refinedPoses = poses.map(re => {
     const pose = dcp(re);

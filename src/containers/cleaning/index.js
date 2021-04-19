@@ -18,7 +18,6 @@ import Bot from 'components/bot';
 
 import styles from './styles';
 import configs from 'configs';
-import utils from 'helpers/utils';
 import ROS from 'helpers/ros';
 import { drawToCanvas, canvas2Image } from 'helpers/pgm';
 import { setError } from 'modules/ui.reducer';
@@ -57,7 +56,7 @@ class Cleaning extends Component {
     return getCurrentMap().then(({ loaded, path }) => {
       if (!loaded) return setError('Cannot load the desired map. The system will try to use the current map on Ohmni\'s local.');
       const { poses, metadata } = path;
-      const trajectory = utils.smoothPath(poses).map((pose, i) => {
+      const trajectory = poses.map((pose, i) => {
         let data = { editable: false, time: 0, velocity: 0, light: 0 }
         if (metadata) metadata.forEach(({ index, ...others }) => {
           if (i === index) data = { editable: true, ...others }
@@ -139,9 +138,11 @@ class Cleaning extends Component {
           <Grid container spacing={2}>
             <Grid item xs={12}>
               <Map map={map}>
-                {trajectory.map(({ position: { x, y }, metadata: { editable } }, index) => {
+                {trajectory.map(({ position: { x, y }, metadata: { editable }, orientation }, index) => {
+                  const quaternion = [orientation.x, orientation.y, orientation.z, orientation.w];
+                  const [yaw] = qte(quaternion);
                   if (editable) return <POI key={index} x={x} y={y} r={width / 500} />
-                  return <Point key={index} x={x} y={y} r={width / 1000} />
+                  return <Point key={index} x={x} y={y} r={width / 1000} yaw={yaw} />
                 })}
                 <Bot {...bot} r={width / 250} />
               </Map>

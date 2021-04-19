@@ -67,6 +67,7 @@ class ROS {
     });
     goal.on('result', function (response) {
       cleaningAction.dispose();
+      console.log(response)
       const { result_id } = response || {}
       // uint8 PENDING=0
       // uint8 ACTIVE=1
