@@ -67,8 +67,7 @@ class ROS {
     });
     goal.on('result', function (response) {
       cleaningAction.dispose();
-      console.log(response)
-      const { result_id } = response || {}
+      const { result_id, message } = response || {}
       // uint8 PENDING=0
       // uint8 ACTIVE=1
       // uint8 PREEMPTED=2
@@ -80,8 +79,8 @@ class ROS {
       // uint8 RECALLED=8
       // uint8 LOST=9
       if (!result_id) return callback('ROS has no response', null);
-      if (result_id === 4) return callback('Sequence aborted', null);
-      if (result_id === 5) return callback('Failed to start', null);
+      if (result_id === 4) return callback(message || 'Sequence aborted', null);
+      if (result_id === 5) return callback(message || 'Failed to start', null);
       return callback(null, response);
     });
     return goal.send();
