@@ -89,6 +89,7 @@ class Editor extends Component {
     const { botId, mapId, pathId } = this.parseParams();
     return getMap(botId, mapId, pathId).then(({ loaded, path }) => {
       if (!loaded) return setError('Cannot load the desired map. The system will try to use the current map on Ohmni\'s local.');
+      console.log(path)
       const { poses, metadata } = path;
       const trajectory = poses.map((pose, i) => {
         let data = { editable: false, time: 0, velocity: 0, light: 0 }
@@ -219,7 +220,8 @@ class Editor extends Component {
     return this.setState({ trajectory: newTrajectory }, this.onHistory);
   }
 
-  onSave = (callback = () => { }) => {
+  onSave = (callback) => {
+    if (typeof callback !== 'function') callback = () => { }
     const { savePath, setError } = this.props;
     const { path, trajectory } = this.state;
     const metadata = trajectory.map((point, index) => {
@@ -232,7 +234,7 @@ class Editor extends Component {
       return data;
     });
     const newPath = dcp(path);
-    newPath.poses = trajectory;
+    newPath.poses = trajectory.map(({ metadata, ...others }) => ({ ...others }));
     newPath.metadata = metadata;
     const { mapId } = this.parseParams();
     return this.setState({ loading: true }, () => {
@@ -249,9 +251,20 @@ class Editor extends Component {
   }
 
   onTest = () => {
-    return this.onSave(() => {
-      const { history } = this.props;
-      return history.push('/cleaning');
+    const { setError } = this.props;
+    return this.setState({ loading: true }, () => {
+      return this.ros.cleaning(true, 0, 0, 1, (er, re) => {
+        if (er) return this.setState({ loading: false }, () => {
+          return setError(er);
+        });
+        return this.setState({ loading: false });
+      });
+    });
+  }
+
+  onCancel = () => {
+    return this.ros.cleaning(false, 0, 0, 1, (er, re) => {
+      return this.setState({ loading: false });
     });
   }
 
@@ -293,8 +306,10 @@ class Editor extends Component {
           <Grid item>
             <Save
               loading={loading}
+              onCancel={this.onCancel}
               onSave={this.onSave}
-              onSaveAndTest={this.onTest}
+              onTest={this.onTest}
+              onSaveAndTest={() => this.onSave(this.onTest)}
             />
           </Grid>
           <Grid item>

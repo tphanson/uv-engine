@@ -42,22 +42,22 @@ class Save extends Component {
    */
   render() {
     // const { classes } = this.props;
-    const { loading, disabled, onSave, onTest, onSaveAndTest } = this.props;
+    const { loading, disabled, onCancel, onSave, onTest, onSaveAndTest } = this.props;
     const { anchorEl } = this.state;
 
     return <Fragment>
-      <ButtonGroup variant="contained" color="primary" disabled={loading || disabled}>
+      <ButtonGroup variant="contained" color="primary" disabled={disabled}>
         <Button
           variant="contained"
-          color="primary"
-          onClick={onSave}
-          startIcon={loading ? <CircularProgress size={17} /> : null}
+          color={loading ? 'default' : 'primary'}
+          onClick={loading ? onCancel : onSave}
+          startIcon={loading ? <CircularProgress size={17} /> : <SaveRounded />}
         >
-          <Typography>Save</Typography>
+          <Typography>{loading ? 'Cancel' : 'Save'}</Typography>
         </Button>
-        <Button onClick={this.onOpen}>
+        {loading ? null : <Button onClick={this.onOpen} >
           <ArrowDropDownRounded />
-        </Button>
+        </Button>}
       </ButtonGroup>
       <Popover
         anchorEl={anchorEl}
@@ -74,7 +74,7 @@ class Save extends Component {
             </ListItemIcon>
             <ListItemText primary="Save Only" secondary="Default" />
           </ListItem>
-          <ListItem button onClick={onTest} disabled>
+          <ListItem button onClick={onTest}>
             <ListItemIcon>
               <AllInclusiveRounded />
             </ListItemIcon>
@@ -95,6 +95,7 @@ class Save extends Component {
 Save.defaultProps = {
   loading: false,
   disabled: false,
+  onCancel: () => { },
   onSave: () => { },
   onTest: () => { },
   onSaveAndTest: () => { },
@@ -103,6 +104,7 @@ Save.defaultProps = {
 Save.propTypes = {
   loading: PropTypes.bool,
   disabled: PropTypes.bool,
+  onCancel: PropTypes.func,
   onSave: PropTypes.func,
   onTest: PropTypes.func,
   onSaveAndTest: PropTypes.func,

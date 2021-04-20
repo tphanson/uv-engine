@@ -53,7 +53,13 @@ class ROS {
     return botTopic.unsubscribe;
   }
 
-  startCleaning = (callback = () => { }) => {
+  /**
+   * 
+   * @param {*} flag - true to start / false for stop
+   * @param {*} callback 
+   * @returns 
+   */
+  cleaning = (flag = false, startPOI = 0, stopPOI = 0, cycles = 1, callback = () => { }) => {
     const cleaningAction = new ActionClient({
       ros: this.ros,
       serverName: '/LUVcontroller',
@@ -62,7 +68,10 @@ class ROS {
     const goal = new Goal({
       actionClient: cleaningAction,
       goalMessage: {
-        start_controller: true
+        start_controller: flag,
+        startPOI: startPOI,
+        stopPOI: stopPOI,
+        cycles: cycles,
       }
     });
     goal.on('result', function (response) {
@@ -78,7 +87,8 @@ class ROS {
       // uint8 RECALLING=7
       // uint8 RECALLED=8
       // uint8 LOST=9
-      if (!result_id) return callback('ROS has no response', null);
+      if (typeof result_id !== 'number') return callback('ROS has no response', null);
+      if (result_id === 2) return callback(null, message || 'Use called process cancelling');
       if (result_id === 4) return callback(message || 'Sequence aborted', null);
       if (result_id === 5) return callback(message || 'Failed to start', null);
       return callback(null, response);

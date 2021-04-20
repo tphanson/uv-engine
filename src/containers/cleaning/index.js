@@ -10,6 +10,8 @@ import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
+import { PlayCircleOutlineRounded } from '@material-ui/icons';
+
 import Card from 'components/card';
 import Map from 'components/map';
 import POI from 'components/poi';
@@ -97,12 +99,18 @@ class Cleaning extends Component {
   onClean = () => {
     const { setError } = this.props;
     return this.setState({ loading: true }, () => {
-      return this.ros.startCleaning((er, re) => {
+      return this.ros.cleaning(true, 0, 0, 1, (er, re) => {
         if (er) return this.setState({ loading: false }, () => {
           return setError(er);
         });
         return this.setState({ loading: false });
       });
+    });
+  }
+
+  onCancel = () => {
+    return this.ros.cleaning(false, 0, 0, 1, (er, re) => {
+      return this.setState({ loading: false });
     });
   }
 
@@ -123,12 +131,11 @@ class Cleaning extends Component {
           <Grid item>
             <Button
               variant="contained"
-              color="primary"
-              onClick={this.onClean}
-              startIcon={loading ? <CircularProgress size={17} /> : null}
-              disabled={loading}
+              color={loading ? 'default' : 'primary'}
+              onClick={loading ? this.onClean : this.onCancel}
+              startIcon={loading ? <CircularProgress size={17} /> : <PlayCircleOutlineRounded />}
             >
-              <Typography style={{ color: '#ffffff' }} variant="body2">{loading ? 'Cleaning' : 'Start'}</Typography>
+              <Typography>{loading ? 'Stop' : 'Start Cleaning'}</Typography>
             </Button>
           </Grid>
         </Grid>
