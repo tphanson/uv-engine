@@ -8,6 +8,7 @@ import Popper from '@material-ui/core/Popper';
 import Paper from '@material-ui/core/Paper';
 import Switch from '@material-ui/core/Switch';
 import IconButton from '@material-ui/core/IconButton';
+import Divider from '@material-ui/core/Divider';
 
 import { SettingsRounded, CloseRounded } from '@material-ui/icons';
 
@@ -51,9 +52,14 @@ class Action extends Component {
     });
   }
 
-  onSwitch = (e) => {
+  onEditable = (e) => {
     const editable = e.target.checked || false;
-    return this.props.onSwitch(editable);
+    return this.props.onEditable(editable);
+  }
+
+  onHighlight = (e) => {
+    const highlight = e.target.checked || false;
+    return this.props.onHighlight(highlight);
   }
 
   onTime = (value) => {
@@ -79,7 +85,7 @@ class Action extends Component {
 
   render() {
     const { classes } = this.props;
-    const { anchorEl, editable, x, y, time, velocity, light } = this.props;
+    const { anchorEl, editable, highlight, x, y, time, velocity, light } = this.props;
 
     return <Popper
       open={anchorEl.open}
@@ -118,7 +124,7 @@ class Action extends Component {
               <Grid item>
                 <Switch
                   checked={editable}
-                  onChange={this.onSwitch}
+                  onChange={this.onEditable}
                   size="small"
                   color="primary"
                 />
@@ -182,6 +188,24 @@ class Action extends Component {
               </Grid>
             </Grid>
           </Fragment> : null}
+          <Grid item xs={12}>
+            <Divider />
+          </Grid>
+          <Grid item xs={12}>
+            <Grid container spacing={2} className={classes.noWrap} alignItems="center">
+              <Grid item className={classes.stretch}>
+                <Typography>Select the segment</Typography>
+              </Grid>
+              <Grid item>
+                <Switch
+                  checked={highlight}
+                  onChange={this.onHighlight}
+                  size="small"
+                  color="primary"
+                />
+              </Grid>
+            </Grid>
+          </Grid>
         </Grid>
       </Paper>
     </Popper>
@@ -191,13 +215,15 @@ class Action extends Component {
 Action.defaultProps = {
   anchorEl: null,
   editable: false,
+  highlight: false,
   x: 0,
   y: 0,
   time: 0,
   velocity: 0,
   light: 0,
   onClose: () => { },
-  onSwitch: () => { },
+  onEditable: () => { },
+  onHighlight: () => { },
   onTime: () => { },
   onVelocity: () => { },
   onLightAmptitude: () => { },
@@ -206,13 +232,15 @@ Action.defaultProps = {
 Action.propTypes = {
   anchorEl: PropTypes.object,
   editable: PropTypes.bool,
+  highlight: PropTypes.bool,
   x: PropTypes.number,
   y: PropTypes.number,
   time: PropTypes.number,
   velocity: PropTypes.number,
   light: PropTypes.number,
   onClose: PropTypes.func,
-  onSwitch: PropTypes.func,
+  onEditable: PropTypes.func,
+  onHighlight: PropTypes.func,
   onTime: PropTypes.func,
   onVelocity: PropTypes.func,
   onLightAmptitude: PropTypes.func,

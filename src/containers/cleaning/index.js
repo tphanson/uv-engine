@@ -149,7 +149,7 @@ class Cleaning extends Component {
                   const quaternion = [orientation.x, orientation.y, orientation.z, orientation.w];
                   const [yaw] = qte(quaternion);
                   if (editable) return <POI key={index} x={x} y={y} r={width / 500} />
-                  return <Point key={index} x={x} y={y} r={width / 1000} yaw={yaw} />
+                  return <Point key={index} x={x} y={y} r={width / 1000} yaw={yaw}/>
                 })}
                 <Bot {...bot} r={width / 250} />
               </Map>

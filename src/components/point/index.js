@@ -12,14 +12,15 @@ class Point extends Component {
   }
 
   onStyles = () => {
-    const { theme, variant } = this.props;
-    const styles = variant === 'primary' ? {
+    const { theme, variant, highlight } = this.props;
+    let styles = variant === 'primary' ? {
       fill: theme.palette.secondary.light,
       opacity: 0.75
     } : {
       fill: '#ff9292',
       opacity: 0.5
     }
+    if (highlight) styles = { ...styles, fill: 'yellow' }
     return styles;
   }
 
@@ -74,6 +75,7 @@ Point.defaultProps = {
   transform: () => ({ x: 0, y: 0 }),
   inverseTransform: () => ({ x: 0, y: 0 }),
   angled: false,
+  highlight: false,
 }
 
 Point.propTypes = {
@@ -86,6 +88,7 @@ Point.propTypes = {
   transform: PropTypes.func,
   inverseTransform: PropTypes.func,
   angled: PropTypes.bool,
+  highlight: PropTypes.bool,
 }
 
 export default Point;

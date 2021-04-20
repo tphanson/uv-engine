@@ -54,7 +54,8 @@ class Editor extends Component {
         angled: false,
         trace: true,
         bot: false
-      }
+      },
+      segment: [0, 0]
     }
 
     // ROS
@@ -89,7 +90,6 @@ class Editor extends Component {
     const { botId, mapId, pathId } = this.parseParams();
     return getMap(botId, mapId, pathId).then(({ loaded, path }) => {
       if (!loaded) return setError('Cannot load the desired map. The system will try to use the current map on Ohmni\'s local.');
-      console.log(path)
       const { poses, metadata } = path;
       const trajectory = poses.map((pose, i) => {
         let data = { editable: false, time: 0, velocity: 0, light: 0 }
@@ -192,11 +192,27 @@ class Editor extends Component {
     return this.setState({ anchorEl: virtualEl(), selected: -1 });
   }
 
-  onSwitch = (editable) => {
+  onEditable = (editable) => {
     const { trajectory, selected } = this.state;
     const newTrajectory = [...trajectory];
     newTrajectory[selected].metadata = { ...newTrajectory[selected].metadata, editable }
     return this.setState({ trajectory: newTrajectory }, this.onHistory);
+  }
+
+  onHighlight = (highlight) => {
+    const { trajectory, selected } = this.state;
+    let start = 0;
+    let stop = 0;
+    let passed = false;
+    if (!highlight) return this.setState({ segment: [start, stop] });
+    trajectory.forEach(({ metadata }, index) => {
+      if (start >= stop && metadata.editable) {
+        if (passed) stop = index;
+        else start = index;
+      }
+      if (index >= selected) passed = true;
+    });
+    return this.setState({ segment: [start, stop] });
   }
 
   onTime = (time) => {
@@ -252,8 +268,9 @@ class Editor extends Component {
 
   onTest = () => {
     const { setError } = this.props;
+    const { segment: [start, stop] } = this.state;
     return this.setState({ loading: true }, () => {
-      return this.ros.cleaning(true, 0, 0, 1, (er, re) => {
+      return this.ros.cleaning(true, start, stop, 1, (er, re) => {
         if (er) return this.setState({ loading: false }, () => {
           return setError(er);
         });
@@ -276,7 +293,7 @@ class Editor extends Component {
     const { ui: { width } } = this.props;
     const {
       loading, path, trajectory, map, settings,
-      anchorEl, selected, disabled, bot
+      anchorEl, selected, disabled, bot, segment: [start, stop]
     } = this.state;
 
     const selectedNode = trajectory[selected] || { ...EMPTY_NODE }
@@ -359,6 +376,7 @@ class Editor extends Component {
                     r={width / 1000}
                     onClick={(e) => this.onClick(e, index)}
                     angled={settings.angled}
+                    highlight={start <= index && index < stop}
                   />
                 })}
               </Map>
@@ -374,8 +392,10 @@ class Editor extends Component {
         time={selectedNode.metadata.time}
         velocity={selectedNode.metadata.velocity}
         light={selectedNode.metadata.light}
+        highlight={start <= selected && selected < stop}
         onClose={this.onClose}
-        onSwitch={this.onSwitch}
+        onEditable={this.onEditable}
+        onHighlight={this.onHighlight}
         onTime={this.onTime}
         onVelocity={this.onVelocity}
         onLightAmptitude={this.onLightAmptitude}
