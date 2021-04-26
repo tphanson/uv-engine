@@ -74,6 +74,8 @@ In this lib, we manually manipulate pixel values on a canvas with respect to the
 
 ### Load maps
 
-First of all, users need to load the desired map to edit. The list of maps is fetched from the cloud server, `https://api-branch.ohmnilabs.com/app/bots/<botId>/maps`. In addition, the `botId` is fetched by `/bot` api from the UV engine API.
+First of all, users need to load the desired map to edit. The list of maps is fetched from the cloud server, `https://api-branch.ohmnilabs.com/app/bots/<botId>/maps`. In addition, the `botId` should be fetched by `/bot` api from the UV engine API.
+
+With the list of maps, users can choose a map to edit.
 
 ## The monitor

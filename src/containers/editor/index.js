@@ -55,7 +55,7 @@ class Editor extends Component {
         trace: true,
         bot: true
       },
-      segment: [0, 0]
+      segment: [0, 0, -1, -1]
     }
 
     // ROS
@@ -211,16 +211,26 @@ class Editor extends Component {
     const { trajectory, selected } = this.state;
     let start = 0;
     let stop = 0;
+    let startSeg = -1;
+    let stopSeg = -1;
     let passed = false;
     if (!highlight) return this.setState({ segment: [start, stop] });
     trajectory.forEach(({ metadata }, index) => {
       if (start >= stop && metadata.editable) {
-        if (passed) stop = index;
-        else start = index;
+        if (passed) {
+          stop = index;
+          stopSeg = startSeg + 1;
+        }
+        else {
+          start = index;
+          startSeg = startSeg + 1;
+        }
       }
       if (index >= selected) passed = true;
     });
-    return this.setState({ segment: [start, stop] });
+    return this.setState({ segment: [start, stop, startSeg, stopSeg] }, () => {
+      return this.onClose();
+    });
   }
 
   onTime = (time) => {
@@ -280,9 +290,10 @@ class Editor extends Component {
 
   onTest = () => {
     const { setError } = this.props;
-    const { segment: [start, stop] } = this.state;
+    const { segment: [start, stop, startSeg, stopSeg] } = this.state;
+    console.log(start, stop, startSeg, stopSeg)
     return this.setState({ loading: true }, () => {
-      return this.ros.cleaning(true, start, stop, 1, (er, re) => {
+      return this.ros.cleaning(true, startSeg, stopSeg, 1, (er, re) => {
         return this.setState({ loading: false }, () => {
           if (er) return setError(er);
         });
