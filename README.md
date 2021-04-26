@@ -66,7 +66,7 @@ In this lib, we manually manipulate pixel values on a canvas with respect to the
 
 * [ROSLib](http://robotwebtools.org/jsdoc/roslibjs/current/): To implement the ros bridge communication.
 
-* [Material UI]((https://material-ui.com/getting-started/installation/)): For quick development, we use MUI to deploy the interface.
+* [Material UI](https://material-ui.com/getting-started/installation/): For quick development, we use MUI to deploy the interface.
 
 * [Konva](https://konvajs.org/): To draw and visualize the map, the path, the bot and others.
 

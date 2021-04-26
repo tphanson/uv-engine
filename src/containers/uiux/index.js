@@ -7,8 +7,6 @@ import isEqual from 'react-fast-compare';
 import { withStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
-import Backdrop from '@material-ui/core/Backdrop';
-import CircularProgress from '@material-ui/core/CircularProgress';
 import Snackbar from '@material-ui/core/Snackbar';
 import Alert from '@material-ui/lab/Alert';
 
@@ -53,23 +51,12 @@ class UiUx extends Component {
   }
 
   render() {
-    const { classes } = this.props;
-    const { ui: { error, visible, loading }, unsetError } = this.props;
+    // const { classes } = this.props;
+    const { ui: { error, visible }, unsetError } = this.props;
 
     return <Grid container spacing={2}>
-      {/* Loading backdrop */}
+      {/* Error dialog */}
       <Grid item xs={12}>
-        <Backdrop className={classes.backdrop} open={loading} transitionDuration={500}>
-          <Grid container spacing={2} justify="center">
-            <Grid item>
-              <CircularProgress color="primary" />
-            </Grid>
-            <Grid item xs={12}>
-              <Typography align="center">Loading data please wait</Typography>
-            </Grid>
-          </Grid>
-        </Backdrop>
-        {/* Error dialog */}
         <Snackbar open={visible} onClose={unsetError} autoHideDuration={6000}>
           <Alert severity="error" onClose={unsetError} >
             <Typography>{error}</Typography>
