@@ -1,4 +1,3 @@
-
 import React, { Component, Children, cloneElement, createRef } from 'react';
 import PropTypes from 'prop-types';
 import isEqual from 'react-fast-compare';
@@ -6,6 +5,8 @@ import { Stage, Layer, Image, Arrow } from 'react-konva';
 
 import { withTheme } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
+
+import { flip } from 'helpers/pgm';
 
 
 class Map extends Component {
@@ -36,7 +37,7 @@ class Map extends Component {
   }
 
   /**
-   * To be passed for children to recalculate thier position
+   * To be passed for children to recalculate their position
    */
   transform = ({ x, y }) => {
     const { map } = this.props;
@@ -45,7 +46,7 @@ class Map extends Component {
     const { width, height, origin, resolution } = map;
     return {
       x: ((x - origin.x) * wide) / (resolution * width),
-      y: ((y - origin.y) * wide) / (resolution * height * ratio)
+      y: ((resolution * height - y + origin.y) * (wide / ratio)) / (resolution * height)
     }
   }
   inverseTransform = ({ x, y }) => {
@@ -54,8 +55,8 @@ class Map extends Component {
     if (!map || !map.width || !wide) return { x: 0, y: 0 }
     const { width, height, origin, resolution } = map;
     return {
-      x: x * resolution * width / wide + origin.x,
-      y: y * resolution * height * ratio / wide + origin.y
+      x: x * (resolution * width) / wide + origin.x,
+      y: origin.y + (resolution * height) - y * (resolution * height) / (wide / ratio)
     }
   }
 
@@ -67,21 +68,25 @@ class Map extends Component {
   }
 
   onLoadMap = () => {
-    const { map } = this.props;
+    const { map, onError } = this.props;
     const { wide } = this.state;
     if (!map || !map.width || !wide) return;
     const { width, height, image, origin, resolution } = map;
-    const ratio = width / height;
-    return this.setState({ ratio, origin, resolution }, () => {
-      // Prevent blurry map
-      const target = this.map.current;
-      if (!target) return;
-      const nativeCtx = target.getContext()._context;
-      nativeCtx.webkitImageSmoothingEnabled = false;
-      nativeCtx.mozImageSmoothingEnabled = false;
-      nativeCtx.imageSmoothingEnabled = false;
-      // Set image
-      target.image(image);
+    return flip(image).then(img => {
+      const ratio = width / height;
+      return this.setState({ ratio, origin, resolution }, () => {
+        // Prevent blurry map
+        const target = this.map.current;
+        if (!target) return;
+        const nativeCtx = target.getContext()._context;
+        nativeCtx.webkitImageSmoothingEnabled = false;
+        nativeCtx.mozImageSmoothingEnabled = false;
+        nativeCtx.imageSmoothingEnabled = false;
+        // Set image
+        return target.image(img);
+      });
+    }).catch(er => {
+      return onError(er);
     });
   }
 
@@ -153,27 +158,6 @@ class Map extends Component {
     return styles;
   }
 
-  // onEvents = () => {
-  //   const { theme } = this.props;
-  //   const events = {
-  //     onMouseEnter: () => {
-  //       this.map.current.to({
-  //         shadowOffsetY: 10,
-  //         shadowBlur: 20,
-  //         duration: theme.transitions.duration.shorter / 1000
-  //       });
-  //     },
-  //     onMouseLeave: () => {
-  //       this.map.current.to({
-  //         shadowOffsetY: 6,
-  //         shadowBlur: 10,
-  //         duration: theme.transitions.duration.shortest / 1000
-  //       });
-  //     }
-  //   }
-  //   return events;
-  // }
-
   render() {
     const { children: rawChildren, theme } = this.props;
     const { ratio, wide } = this.state;
@@ -190,7 +174,6 @@ class Map extends Component {
               width={wide}
               height={wide / ratio}
               {...this.onStyles()}
-            // {...this.onEvents()}
             />
             <Arrow
               x={this.transform({ x: 0, y: 0 }).x}
@@ -201,6 +184,7 @@ class Map extends Component {
               pointerWidth={1}
               stroke={theme.palette.grey[500]}
               strokeWidth={1}
+              scaleY={-1}
               lineJoin="round"
             />
             <Arrow
@@ -212,6 +196,7 @@ class Map extends Component {
               pointerWidth={1}
               stroke={theme.palette.grey[500]}
               strokeWidth={1}
+              scaleY={-1}
               lineJoin="round"
             />
             {Children.map(children, child => cloneElement(child, {
@@ -228,11 +213,11 @@ class Map extends Component {
 }
 
 Map.defaultProps = {
-  flipped: false,
+  onError: () => { },
 }
 
 Map.propTypes = {
-  flipped: PropTypes.bool,
+  onError: PropTypes.func,
 }
 
 export default withTheme(Map);

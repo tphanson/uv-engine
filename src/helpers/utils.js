@@ -26,4 +26,15 @@ utils.smoothPosition = (poses, gamma = 0.7) => {
   return refinedPoses;
 }
 
+utils.prettySeconds = (seconds) => {
+  const s = seconds % 60;
+  const minutes = (seconds - s) / 60;
+  const m = minutes % 60;
+  const h = (minutes - m) / 60;
+  const _s = s ? `${s}s` : '';
+  const _m = m ? `${m}m` : '';
+  const _h = h ? `${h}h` : '';
+  return _h + _m + _s || '0s';
+}
+
 export default utils;

@@ -51,9 +51,9 @@ class Editor extends Component {
         disabledRedo: true,
       },
       settings: {
-        angled: false,
+        angled: true,
         trace: true,
-        bot: false
+        bot: true
       },
       segment: [0, 0]
     }
@@ -68,8 +68,7 @@ class Editor extends Component {
   }
 
   componentWillUnmount() {
-    if (this.unsubscribeMap) this.unsubscribeMap();
-    if (this.unsubscribeBot) this.unsubscribeBot();
+    this.unsubscribeAll();
   }
 
   /**
@@ -85,6 +84,11 @@ class Editor extends Component {
     };
   }
 
+  unsubscribeAll = () => {
+    if (this.unsubscribeMap) this.unsubscribeMap();
+    if (this.unsubscribeBot) this.unsubscribeBot();
+  }
+
   loadData = (callback = () => { }) => {
     const { getMap, setError } = this.props;
     const { botId, mapId, pathId } = this.parseParams();
@@ -92,10 +96,10 @@ class Editor extends Component {
       if (!loaded) return setError('Cannot load the desired map. The system will try to use the current map on Ohmni\'s local.');
       const { poses, metadata } = path;
       const trajectory = poses.map((pose, i) => {
-        let data = { editable: false, time: 0, velocity: 0, light: 0 }
+        let data = { editable: false, velocity: 0, light: 0 }
         // Make sure always there is one segment at least
-        if (i === 0) data = { editable: true, time: 0, velocity: 0.018, light: 2000 }
-        if (i === poses.length - 1) data = { editable: true, time: 0, velocity: 0.018, light: 2000 }
+        if (i === 0) data = { editable: true, velocity: 0.018, light: 2000 }
+        if (i === poses.length - 1) data = { editable: true, velocity: 0.018, light: 2000 }
         // Load saved segments
         if (metadata) metadata.forEach(({ index, ...others }) => {
           if (i === index) data = { editable: true, ...others }
@@ -103,6 +107,8 @@ class Editor extends Component {
         return { ...pose, metadata: data }
       });
       return this.setState({ trajectory, path }, () => {
+        // Saving path for the first time
+        if (!metadata) return this.onSave();
         // Editing History
         this.history = new History(trajectory);
         this.history.watch(disabled => {
@@ -117,6 +123,8 @@ class Editor extends Component {
   }
 
   onRos = () => {
+    // Unsubcribe all pre-events
+    this.unsubscribeAll();
     // Map
     this.unsubscribeMap = this.ros.map(msg => {
       const {
@@ -215,13 +223,6 @@ class Editor extends Component {
     return this.setState({ segment: [start, stop] });
   }
 
-  onTime = (time) => {
-    const { trajectory, selected } = this.state;
-    const newTrajectory = [...trajectory];
-    newTrajectory[selected].metadata = { ...newTrajectory[selected].metadata, time }
-    return this.setState({ trajectory: newTrajectory }, this.onHistory);
-  }
-
   onVelocity = (velocity) => {
     const { trajectory, selected } = this.state;
     const newTrajectory = [...trajectory];
@@ -240,6 +241,7 @@ class Editor extends Component {
     if (typeof callback !== 'function') callback = () => { }
     const { savePath, setError } = this.props;
     const { path, trajectory } = this.state;
+    // Extract metadata
     const metadata = trajectory.map((point, index) => {
       const data = dcp(point.metadata);
       data.index = index;
@@ -249,12 +251,15 @@ class Editor extends Component {
       delete data.editable;
       return data;
     });
+    // Build new path
     const newPath = dcp(path);
     newPath.poses = trajectory.map(({ metadata, ...others }) => ({ ...others }));
     newPath.metadata = metadata;
     const { mapId } = this.parseParams();
+    // Save
     return this.setState({ loading: true }, () => {
       return savePath(mapId, newPath).then(re => {
+        // Reload data
         return this.loadData(() => {
           return this.setState({ loading: false }, callback);
         });
@@ -271,17 +276,19 @@ class Editor extends Component {
     const { segment: [start, stop] } = this.state;
     return this.setState({ loading: true }, () => {
       return this.ros.cleaning(true, start, stop, 1, (er, re) => {
-        if (er) return this.setState({ loading: false }, () => {
-          return setError(er);
+        return this.setState({ loading: false }, () => {
+          if (er) return setError(er);
         });
-        return this.setState({ loading: false });
       });
     });
   }
 
   onCancel = () => {
+    const { setError } = this.props;
     return this.ros.cleaning(false, 0, 0, 1, (er, re) => {
-      return this.setState({ loading: false });
+      return this.setState({ loading: false }, () => {
+        if (er) return setError(er);
+      });
     });
   }
 
@@ -389,14 +396,12 @@ class Editor extends Component {
         editable={selectedNode.metadata.editable}
         x={selectedNode.position.x}
         y={selectedNode.position.y}
-        time={selectedNode.metadata.time}
         velocity={selectedNode.metadata.velocity}
         light={selectedNode.metadata.light}
         highlight={start <= selected && selected < stop}
         onClose={this.onClose}
         onEditable={this.onEditable}
         onHighlight={this.onHighlight}
-        onTime={this.onTime}
         onVelocity={this.onVelocity}
         onLightAmptitude={this.onLightAmptitude}
       />

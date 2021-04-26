@@ -66,7 +66,7 @@ class Bot extends Component {
         angle={60}
         fill={theme.palette.grey[400]}
         opacity={0.5}
-        rotation={180 * yaw / Math.PI - 30}
+        rotation={-180 * yaw / Math.PI - 30}
       />
       <Circle
         ref={this.ref}

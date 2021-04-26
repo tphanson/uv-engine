@@ -1,5 +1,6 @@
 import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
+import isEqual from 'react-fast-compare';
 
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
@@ -18,6 +19,7 @@ import {
 } from '@material-ui/icons';
 
 import styles from './styles';
+import utils from 'helpers/utils';
 
 
 class Save extends Component {
@@ -25,8 +27,25 @@ class Save extends Component {
     super();
 
     this.state = {
+      timer: 0,
       anchorEl: null
     }
+  }
+
+  componentDidMount() {
+    this.startTimer();
+  }
+
+  componentDidUpdate(prevProps) {
+    const { loading: prevLoading } = prevProps;
+    const { loading } = this.props;
+    if (!isEqual(prevLoading, loading)) {
+      return this.startTimer();
+    }
+  }
+
+  componentWillUnmount() {
+    this.stopTimer();
   }
 
   onOpen = (e) => {
@@ -37,13 +56,29 @@ class Save extends Component {
     return this.setState({ anchorEl: null });
   }
 
+  startTimer = () => {
+    this.stopTimer();
+    const { loading } = this.props;
+    if (loading) this.timer = setInterval(() => {
+      const { timer } = this.state;
+      return this.setState({ timer: timer + 1 });
+    }, 1000);
+  }
+
+  stopTimer = () => {
+    if (this.timer) return clearInterval(this.timer);
+  }
+
   /**
    * Render
    */
   render() {
     // const { classes } = this.props;
-    const { loading, disabled, onCancel, onSave, onTest, onSaveAndTest } = this.props;
-    const { anchorEl } = this.state;
+    const {
+      loading, disabled,
+      onCancel, onSave, onTest, onSaveAndTest
+    } = this.props;
+    const { anchorEl, timer } = this.state;
 
     return <Fragment>
       <ButtonGroup variant="contained" color="primary" disabled={disabled}>
@@ -53,7 +88,7 @@ class Save extends Component {
           onClick={loading ? onCancel : onSave}
           startIcon={loading ? <CircularProgress size={17} /> : <SaveRounded />}
         >
-          <Typography>{loading ? 'Cancel' : 'Save'}</Typography>
+          <Typography>{loading ? `Cancel (${utils.prettySeconds(timer)})` : 'Save'}</Typography>
         </Button>
         {loading ? null : <Button onClick={this.onOpen} >
           <ArrowDropDownRounded />
@@ -80,7 +115,7 @@ class Save extends Component {
             </ListItemIcon>
             <ListItemText primary="Test Only" />
           </ListItem>
-          <ListItem button onClick={onSaveAndTest}>
+          <ListItem button onClick={onSaveAndTest} disabled>
             <ListItemIcon>
               <FlightTakeoffRounded />
             </ListItemIcon>

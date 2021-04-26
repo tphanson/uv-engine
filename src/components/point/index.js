@@ -55,7 +55,7 @@ class Point extends Component {
         {...this.onEvents()}
       />
       {angled ? <Line
-        points={[centroid.x, centroid.y, centroid.x + r * Math.cos(yaw), centroid.y + r * Math.sin(yaw),]}
+        points={[centroid.x, centroid.y, centroid.x + r * Math.cos(yaw), centroid.y - r * Math.sin(yaw),]}
         stroke={lineColor}
         strokeWidth={r / 10}
         lineCap="round"

@@ -1,4 +1,5 @@
 import { createCanvas } from 'canvas';
+import Jimp from 'jimp';
 
 
 /**
@@ -29,6 +30,22 @@ export function canvas2Image(canvas) {
   const image = new Image();
   image.src = canvas.toDataURL();
   return image;
+}
+
+export function flip(image) {
+  return new Promise((resolve, reject) => {
+    Jimp.read(image.src).then(img => {
+      return img.flip(false, true);
+    }).then(img => {
+      return img.getBase64Async(Jimp.MIME_PNG);
+    }).then(base64Img => {
+      const image = new Image();
+      image.src = base64Img;
+      return resolve(image);
+    }).catch(er => {
+      return reject(er);
+    });
+  });
 }
 
 class PGM {
