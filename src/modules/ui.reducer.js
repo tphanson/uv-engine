@@ -8,8 +8,6 @@ const defaultState = {
   type: 'xs',
   error: '',
   visible: false,
-  loading: false,
-  advance: false,
 }
 
 
@@ -100,7 +98,7 @@ export const setError = (error) => {
         return reject(er);
       }
 
-      const data = { error: error.toString(), visible: true }
+      const data = { error: JSON.stringify(error), visible: true }
       dispatch({ type: SET_ERROR_OK, data });
       return resolve(data);
     });
@@ -134,110 +132,6 @@ export const unsetError = () => {
 }
 
 /**
- * Loading
- */
-export const SET_LOADING = 'SET_LOADING';
-export const SET_LOADING_OK = 'SET_LOADING_OK';
-export const SET_LOADING_FAIL = 'SET_LOADING_FAIL';
-
-export const setLoading = () => {
-  return (dispatch, getState) => {
-    return new Promise((resolve, reject) => {
-      dispatch({ type: SET_LOADING });
-
-      const { ui: { loading: prevLoading } } = getState();
-      if (prevLoading) {
-        const er = 'Already loading';
-        dispatch({ type: SET_LOADING_FAIL, reason: er });
-        return reject(er);
-      }
-
-      const data = { loading: true }
-      dispatch({ type: SET_LOADING_OK, data });
-      return resolve(data);
-    });
-  }
-}
-
-/**
- * Unloading
- */
-export const UNSET_LOADING = 'UNSET_LOADING';
-export const UNSET_LOADING_OK = 'UNSET_LOADING_OK';
-export const UNSET_LOADING_FAIL = 'UNSET_LOADING_FAIL';
-
-export const unsetLoading = () => {
-  return (dispatch, getState) => {
-    return new Promise((resolve, reject) => {
-      dispatch({ type: UNSET_LOADING });
-
-      const { ui: { loading: prevLoading } } = getState();
-      if (!prevLoading) {
-        const er = 'Already unloading';
-        dispatch({ type: UNSET_LOADING_FAIL, reason: er });
-        return reject(er);
-      }
-
-      const data = { loading: false }
-      dispatch({ type: UNSET_LOADING_OK, data });
-      return resolve(data);
-    });
-  }
-}
-
-/**
- * Advance
- */
-export const SET_ADVANCE = 'SET_ADVANCE';
-export const SET_ADVANCE_OK = 'SET_ADVANCE_OK';
-export const SET_ADVANCE_FAIL = 'SET_ADVANCE_FAIL';
-
-export const setAdvance = () => {
-  return (dispatch, getState) => {
-    return new Promise((resolve, reject) => {
-      dispatch({ type: SET_ADVANCE });
-
-      const { ui: { advance: prevAdvance } } = getState();
-      if (prevAdvance) {
-        const er = 'Already advance';
-        dispatch({ type: SET_ADVANCE_FAIL, reason: er });
-        return reject(er);
-      }
-
-      const data = { advance: true }
-      dispatch({ type: SET_ADVANCE_OK, data });
-      return resolve(data);
-    });
-  }
-}
-
-/**
- * Unadvance
- */
-export const UNSET_ADVANCE = 'UNSET_ADVANCE';
-export const UNSET_ADVANCE_OK = 'UNSET_ADVANCE_OK';
-export const UNSET_ADVANCE_FAIL = 'UNSET_ADVANCE_FAIL';
-
-export const unsetAdvance = () => {
-  return (dispatch, getState) => {
-    return new Promise((resolve, reject) => {
-      dispatch({ type: UNSET_ADVANCE });
-
-      const { ui: { advance: prevAdvance } } = getState();
-      if (!prevAdvance) {
-        const er = 'Already unadvance';
-        dispatch({ type: UNSET_ADVANCE_FAIL, reason: er });
-        return reject(er);
-      }
-
-      const data = { advance: false }
-      dispatch({ type: UNSET_ADVANCE_OK, data });
-      return resolve(data);
-    });
-  }
-}
-
-/**
  * Reducder
  */
 // eslint-disable-next-line
@@ -258,22 +152,6 @@ export default (state = defaultState, action) => {
     case UNSET_ERROR_OK:
       return { ...state, ...action.data };
     case UNSET_ERROR_FAIL:
-      return { ...state, ...action.data };
-    case SET_LOADING_OK:
-      return { ...state, ...action.data };
-    case SET_LOADING_FAIL:
-      return { ...state, ...action.data };
-    case UNSET_LOADING_OK:
-      return { ...state, ...action.data };
-    case UNSET_LOADING_FAIL:
-      return { ...state, ...action.data };
-    case SET_ADVANCE_OK:
-      return { ...state, ...action.data };
-    case SET_ADVANCE_FAIL:
-      return { ...state, ...action.data };
-    case UNSET_ADVANCE_OK:
-      return { ...state, ...action.data };
-    case UNSET_ADVANCE_FAIL:
       return { ...state, ...action.data };
     default:
       return state;

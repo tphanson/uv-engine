@@ -30,6 +30,7 @@ export function virtualEl(x = 0, y = 0) {
   }
 }
 
+const MAX_TIME = 600000;
 const MAX_VELOCITY = 3;
 const MAX_LIGHT = 10000;
 
@@ -61,6 +62,11 @@ class Action extends Component {
     return this.props.onHighlight(highlight);
   }
 
+  onTime = (value) => {
+    const time = MAX_TIME * value / 100;
+    return this.props.onTime(time);
+  }
+
   onVelocity = (value) => {
     const velocity = MAX_VELOCITY * value / 100;
     return this.props.onVelocity(velocity);
@@ -79,7 +85,7 @@ class Action extends Component {
 
   render() {
     const { classes } = this.props;
-    const { anchorEl, editable, highlight, x, y, velocity, light } = this.props;
+    const { anchorEl, editable, highlight, x, y, time, velocity, light } = this.props;
 
     return <Popper
       open={anchorEl.open}
@@ -136,6 +142,21 @@ class Action extends Component {
             </Grid>
           </Grid>
           {editable ? <Fragment>
+            <Grid item xs={12}>
+              <Grid container spacing={2} className={classes.noWrap} alignItems="center">
+                <Grid item className={classes.stretch}>
+                  <Typography>Time (Max. 10 minutes)</Typography>
+                </Grid>
+                <Grid item>
+                  <CircularProgressWithLabel
+                    variant="determinate"
+                    onChange={this.onTime}
+                    value={time * 100 / MAX_TIME}
+                    label={`${utils.prettyNumber(time / 60000)}'`}
+                  />
+                </Grid>
+              </Grid>
+            </Grid>
             <Grid item xs={12}>
               <Grid container spacing={2} className={classes.noWrap} alignItems="center">
                 <Grid item className={classes.stretch}>
@@ -197,6 +218,7 @@ Action.defaultProps = {
   highlight: false,
   x: 0,
   y: 0,
+  time: 0,
   velocity: 0,
   light: 0,
   onClose: () => { },
@@ -213,11 +235,13 @@ Action.propTypes = {
   highlight: PropTypes.bool,
   x: PropTypes.number,
   y: PropTypes.number,
+  time: PropTypes.number,
   velocity: PropTypes.number,
   light: PropTypes.number,
   onClose: PropTypes.func,
   onEditable: PropTypes.func,
   onHighlight: PropTypes.func,
+  onTime: PropTypes.func,
   onVelocity: PropTypes.func,
   onLightAmptitude: PropTypes.func,
 }
