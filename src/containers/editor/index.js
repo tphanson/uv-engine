@@ -55,7 +55,7 @@ class Editor extends Component {
         trace: true,
         bot: true
       },
-      segment: [0, 0, -1, -1]
+      segment: [-1, -1, -1, -1]
     }
 
     // ROS
@@ -65,10 +65,17 @@ class Editor extends Component {
 
   componentDidMount() {
     this.loadData(this.onRos);
+    window.addEventListener('keydown', this.onEsc);
   }
 
   componentWillUnmount() {
     this.unsubscribeAll();
+    window.removeEventListener('keydown', this.onEsc);
+  }
+
+
+  onEsc = (e) => {
+    if (e.key === 'Escape') return this.setState({ segment: [-1, -1, -1, -1] });
   }
 
   /**
@@ -196,6 +203,32 @@ class Editor extends Component {
     });
   }
 
+  onHold = (e, index) => {
+    const { segment: [start, stop] } = this.state;
+    if (e.released) {
+      if (start < 0 || stop < 0) return this.setState({ segment: [-1, -1, -1, -1] }, this.parseHighlight);
+      else return; // Do nothing
+    }
+    if (start < 0) return this.setState({ segment: [index, -1, -1, -1] }, this.parseHighlight);
+    if (index === start) return this.setState({ segment: [-1, -1, -1, -1] }, this.parseHighlight);
+    if (index < start) return this.setState({ segment: [index, start, -1, -1] }, this.parseHighlight);
+    return this.setState({ segment: [start, index, -1, -1] }, this.parseHighlight);
+  }
+
+  parseHighlight = () => {
+    let { trajectory, segment: [start, stop, startSeg, stopSeg] } = this.state;
+    if (start < 0 || stop < 0) return;
+    let passed = false;
+    trajectory.forEach(({ metadata }, index) => {
+      if (metadata.editable) {
+        if (!passed) startSeg = startSeg + 1;
+        else stopSeg = startSeg + 1;
+      }
+      if (index >= start) passed = true;
+    });
+    return this.setState({ segment: [start, stop, startSeg, stopSeg] });
+  }
+
   onClose = () => {
     return this.setState({ anchorEl: virtualEl(), selected: -1 });
   }
@@ -205,32 +238,6 @@ class Editor extends Component {
     const newTrajectory = [...trajectory];
     newTrajectory[selected].metadata = { ...newTrajectory[selected].metadata, editable }
     return this.setState({ trajectory: newTrajectory }, this.onHistory);
-  }
-
-  onHighlight = (highlight) => {
-    const { trajectory, selected } = this.state;
-    let start = 0;
-    let stop = 0;
-    let startSeg = -1;
-    let stopSeg = -1;
-    let passed = false;
-    if (!highlight) return this.setState({ segment: [start, stop] });
-    trajectory.forEach(({ metadata }, index) => {
-      if (start >= stop && metadata.editable) {
-        if (passed) {
-          stop = index;
-          stopSeg = startSeg + 1;
-        }
-        else {
-          start = index;
-          startSeg = startSeg + 1;
-        }
-      }
-      if (index >= selected) passed = true;
-    });
-    return this.setState({ segment: [start, stop, startSeg, stopSeg] }, () => {
-      return this.onClose();
-    });
   }
 
   onTime = (time) => {
@@ -390,8 +397,10 @@ class Editor extends Component {
                     x={x}
                     y={y}
                     r={width / 500}
-                    onClick={(e) => this.onClick(e, index)}
+                    onClick={e => this.onClick(e, index)}
+                    onHold={e => this.onHold(e, index)}
                     onChange={pos => this.onChange(index, pos)}
+                    highlight={start === index || stop === index || (start < index && index < stop)}
                   />
                   return <Point
                     key={index}
@@ -401,7 +410,7 @@ class Editor extends Component {
                     r={width / 1000}
                     onClick={(e) => this.onClick(e, index)}
                     angled={settings.angled}
-                    highlight={start <= index && index < stop}
+                    highlight={start < index && index < stop}
                   />
                 })}
               </Map>
@@ -417,10 +426,8 @@ class Editor extends Component {
         time={selectedNode.metadata.time}
         velocity={selectedNode.metadata.velocity}
         light={selectedNode.metadata.light}
-        highlight={start <= selected && selected < stop}
         onClose={this.onClose}
         onEditable={this.onEditable}
-        onHighlight={this.onHighlight}
         onTime={this.onTime}
         onVelocity={this.onVelocity}
         onLightAmptitude={this.onLightAmptitude}

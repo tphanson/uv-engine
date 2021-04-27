@@ -8,12 +8,11 @@ import Popper from '@material-ui/core/Popper';
 import Paper from '@material-ui/core/Paper';
 import Switch from '@material-ui/core/Switch';
 import IconButton from '@material-ui/core/IconButton';
-import Divider from '@material-ui/core/Divider';
+import TextField from '@material-ui/core/TextField';
 
 import { SettingsRounded, CloseRounded } from '@material-ui/icons';
 
 import Drain from 'components/drain';
-import CircularProgressWithLabel from 'components/progress';
 
 import styles from './styles';
 import utils from 'helpers/utils';
@@ -30,51 +29,30 @@ export function virtualEl(x = 0, y = 0) {
   }
 }
 
-const MAX_TIME = 600000;
+const MAX_TIME = 120000;
 const MAX_VELOCITY = 3;
 const MAX_LIGHT = 10000;
 
 class Action extends Component {
-  constructor() {
-    super();
-
-    this.state = {
-      anchorEl: virtualEl(),
-      selected: -1,
-    }
-  }
-
-
-  onClick = (e, index) => {
-    return this.setState({
-      anchorEl: virtualEl(e.evt.clientX, e.evt.clientY),
-      selected: index
-    });
-  }
 
   onEditable = (e) => {
     const editable = e.target.checked || false;
     return this.props.onEditable(editable);
   }
 
-  onHighlight = (e) => {
-    const highlight = e.target.checked || false;
-    return this.props.onHighlight(highlight);
-  }
-
-  onTime = (value) => {
-    const time = MAX_TIME * value / 100;
+  onTime = (e) => {
+    const time = parseFloat(e.target.value) || 0;
     return this.props.onTime(time);
   }
 
-  onVelocity = (value) => {
-    const velocity = MAX_VELOCITY * value / 100;
+  onVelocity = (e) => {
+    const velocity = parseFloat(e.target.value) || 0;
     return this.props.onVelocity(velocity);
   }
 
-  onLightAmptitude = (value) => {
-    const light = MAX_LIGHT * value / 100;
-    return this.props.onLightAmptitude(light);
+  onLightAmptitude = (e) => {
+    const light = parseFloat(e.target.value) || 0;
+    return this.props.onVelocity(light);
   }
 
   onClose = () => {
@@ -85,7 +63,7 @@ class Action extends Component {
 
   render() {
     const { classes } = this.props;
-    const { anchorEl, editable, highlight, x, y, time, velocity, light } = this.props;
+    const { anchorEl, editable, x, y, time, velocity, light } = this.props;
 
     return <Popper
       open={anchorEl.open}
@@ -143,69 +121,36 @@ class Action extends Component {
           </Grid>
           {editable ? <Fragment>
             <Grid item xs={12}>
-              <Grid container spacing={2} className={classes.noWrap} alignItems="center">
-                <Grid item className={classes.stretch}>
-                  <Typography>Time (Max. 10 minutes)</Typography>
-                </Grid>
-                <Grid item>
-                  <CircularProgressWithLabel
-                    variant="determinate"
-                    onChange={this.onTime}
-                    value={time * 100 / MAX_TIME}
-                    label={`${utils.prettyNumber(time / 60000)}'`}
-                  />
-                </Grid>
-              </Grid>
+              <TextField
+                variant="outlined"
+                label={`Time (Max. ${utils.prettyNumber(MAX_TIME)} miliseconds)`}
+                value={time}
+                onChange={this.onTime}
+                size="small"
+                fullWidth
+              />
             </Grid>
             <Grid item xs={12}>
-              <Grid container spacing={2} className={classes.noWrap} alignItems="center">
-                <Grid item className={classes.stretch}>
-                  <Typography>{`Velocity (Max. ${MAX_VELOCITY} m/s)`}</Typography>
-                </Grid>
-                <Grid item>
-                  <CircularProgressWithLabel
-                    variant="determinate"
-                    onChange={this.onVelocity}
-                    value={velocity * 100 / MAX_VELOCITY}
-                    label={`${utils.prettyNumber(velocity)} m/s`}
-                  />
-                </Grid>
-              </Grid>
+              <TextField
+                variant="outlined"
+                label={`Velocity (Max. ${MAX_VELOCITY} m/s)`}
+                value={velocity}
+                onChange={this.onVelocity}
+                size="small"
+                fullWidth
+              />
             </Grid>
             <Grid item xs={12}>
-              <Grid container spacing={2} className={classes.noWrap} alignItems="center">
-                <Grid item className={classes.stretch}>
-                  <Typography>{`Light Amptitude (Max ${MAX_LIGHT})`}</Typography>
-                </Grid>
-                <Grid item>
-                  <CircularProgressWithLabel
-                    variant="determinate"
-                    onChange={this.onLightAmptitude}
-                    value={light * 100 / MAX_LIGHT}
-                    label={`${utils.prettyNumber(light / 1000)}k`}
-                  />
-                </Grid>
-              </Grid>
+              <TextField
+                variant="outlined"
+                label={`Light Amptitude (Max. ${utils.prettyNumber(MAX_LIGHT)} units)`}
+                value={light}
+                onChange={this.onLightAmptitude}
+                size="small"
+                fullWidth
+              />
             </Grid>
           </Fragment> : null}
-          <Grid item xs={12}>
-            <Divider />
-          </Grid>
-          <Grid item xs={12}>
-            <Grid container spacing={2} className={classes.noWrap} alignItems="center">
-              <Grid item className={classes.stretch}>
-                <Typography>Select the segment</Typography>
-              </Grid>
-              <Grid item>
-                <Switch
-                  checked={highlight}
-                  onChange={this.onHighlight}
-                  size="small"
-                  color="primary"
-                />
-              </Grid>
-            </Grid>
-          </Grid>
         </Grid>
       </Paper>
     </Popper>
@@ -215,7 +160,6 @@ class Action extends Component {
 Action.defaultProps = {
   anchorEl: null,
   editable: false,
-  highlight: false,
   x: 0,
   y: 0,
   time: 0,
@@ -223,7 +167,6 @@ Action.defaultProps = {
   light: 0,
   onClose: () => { },
   onEditable: () => { },
-  onHighlight: () => { },
   onTime: () => { },
   onVelocity: () => { },
   onLightAmptitude: () => { },
@@ -232,7 +175,6 @@ Action.defaultProps = {
 Action.propTypes = {
   anchorEl: PropTypes.object,
   editable: PropTypes.bool,
-  highlight: PropTypes.bool,
   x: PropTypes.number,
   y: PropTypes.number,
   time: PropTypes.number,
@@ -240,7 +182,6 @@ Action.propTypes = {
   light: PropTypes.number,
   onClose: PropTypes.func,
   onEditable: PropTypes.func,
-  onHighlight: PropTypes.func,
   onTime: PropTypes.func,
   onVelocity: PropTypes.func,
   onLightAmptitude: PropTypes.func,

@@ -98,7 +98,7 @@ export const setError = (error) => {
         return reject(er);
       }
 
-      const data = { error: JSON.stringify(error), visible: true }
+      const data = { error: error.toString(), visible: true }
       dispatch({ type: SET_ERROR_OK, data });
       return resolve(data);
     });

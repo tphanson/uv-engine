@@ -43,7 +43,7 @@ class POI extends Component {
   }
 
   onStyles = () => {
-    const { theme } = this.props;
+    const { theme, highlight } = this.props;
     let styles = {
       fill: theme.palette.primary.main,
       shadowColor: theme.palette.primary.main,
@@ -52,11 +52,12 @@ class POI extends Component {
       shadowBlur: 10,
       shadowOpacity: 0.9,
     }
+    if (highlight) styles = { ...styles, fill: 'yellow' }
     return styles;
   }
 
   onEvents = () => {
-    const { theme, onClick } = this.props;
+    const { theme, onClick, onHold } = this.props;
     const events = {
       onMouseEnter: () => {
         this.ref.current.to({
@@ -81,11 +82,26 @@ class POI extends Component {
         return this.onCursor('pointer');
       },
       onClick: (e) => {
-        return onClick(e);
+        const secondaryAction = e.evt.ctrlKey || e.evt.metaKey;
+        if (secondaryAction) {
+          e.released = false;
+          onHold(e);
+          return window.addEventListener('mousemove', this.listener);
+        }
+        else return onClick(e);
       },
       onDragEnd: this.onDragEnd
     }
     return events;
+  }
+
+  listener = (e) => {
+    const { onHold } = this.props;
+    const isHold = e.ctrlKey || e.metaKey;
+    if (isHold) return e.released = false;
+    window.removeEventListener('mousemove', this.listener);
+    e.released = true;
+    return onHold(e);
   }
 
   render() {
@@ -109,9 +125,11 @@ POI.defaultProps = {
   y: 0,
   boundary: [0, 0, window.innerWidth, window.innerHeight],
   onClick: () => { },
+  onHold: () => { },
   onChange: () => { },
   transform: () => ({ x: 0, y: 0 }),
   inverseTransform: () => ({ x: 0, y: 0 }),
+  highlight: false,
 }
 
 POI.propTypes = {
@@ -120,9 +138,11 @@ POI.propTypes = {
   y: PropTypes.number,
   boundary: PropTypes.array,
   onClick: PropTypes.func,
+  onHold: PropTypes.func,
   onChange: PropTypes.func,
   transform: PropTypes.func,
   inverseTransform: PropTypes.func,
+  highlight: PropTypes.bool,
 }
 
 export default POI;

@@ -113,7 +113,10 @@ class Save extends Component {
             <ListItemIcon>
               <AllInclusiveRounded />
             </ListItemIcon>
-            <ListItemText primary="Test Only" />
+            <ListItemText primary="Test Only" secondary={<Fragment>
+              <Typography style={{ fontSize: 10 }}>Hold ctrl (or cmd on Mac) and click to choose Start/Stop POI.</Typography>
+              <Typography style={{ fontSize: 10 }}>Press Esc to cancel.</Typography>
+            </Fragment>} />
           </ListItem>
           <ListItem button onClick={onSaveAndTest} disabled>
             <ListItemIcon>
