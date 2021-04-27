@@ -41,12 +41,12 @@ class Editor extends Component {
     this.state = {
       anchorEl: virtualEl(),
       loading: false,
-      selected: -1,
-      trajectory: [],
-      map: {},
-      path: {},
-      bot: {},
-      disabled: {
+      selected: -1, // Selected node
+      trajectory: [], // Raw poses of the path
+      map: {}, // Map info
+      path: {}, // the same as trajectory but added metadata
+      bot: {}, // Bot's position & orientation
+      disabled: { // History state
         disabledUndo: true,
         disabledRedo: true,
       },
