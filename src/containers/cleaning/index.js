@@ -21,7 +21,7 @@ import Bot from 'components/bot';
 import styles from './styles';
 import configs from 'configs';
 import ROS from 'helpers/ros';
-import { drawToCanvas, canvas2Image } from 'helpers/pgm';
+import PGM from 'helpers/pgm';
 import { setError } from 'modules/ui.reducer';
 import { getCurrentMap } from 'modules/bot.reducer';
 
@@ -46,7 +46,6 @@ class Cleaning extends Component {
   }
 
   componentWillUnmount() {
-    if (this.unsubscribeMap) this.unsubscribeMap();
     if (this.unsubscribeBot) this.unsubscribeBot();
   }
 
@@ -55,8 +54,25 @@ class Cleaning extends Component {
    */
   loadData = (callback = () => { }) => {
     const { getCurrentMap, setError } = this.props;
-    return getCurrentMap().then(({ loaded, path }) => {
-      if (!loaded) return setError('Cannot load the desired map. The system will try to use the current map on Ohmni\'s local.');
+
+    let map = null;
+    let info = null; // map info
+    let path = null;
+    return getCurrentMap().then(data => {
+      // Assign data
+      info = data.info;
+      path = data.path;
+      // Parse map
+      const pgm = new PGM(data.map);
+      return pgm.draw();
+    }).then(({ width, height, image }) => {
+      // Build map object
+      map = {
+        width, height, image,
+        origin: { x: info.origin[0], y: info.origin[1] },
+        resolution: info.resolution
+      }
+      // Parse path
       const { poses, metadata } = path;
       const trajectory = poses.map((pose, i) => {
         let data = { editable: false, time: 0, velocity: 0, light: 0 }
@@ -65,25 +81,13 @@ class Cleaning extends Component {
         });
         return { ...pose, metadata: data }
       });
-      return this.setState({ trajectory, path }, callback);
+      return this.setState({ map, trajectory, path }, callback);
     }).catch(er => {
       return setError(er);
     });
   }
 
   onRos = () => {
-    // Map
-    this.unsubscribeMap = this.ros.map(msg => {
-      const {
-        data,
-        info: { width, height, resolution, origin: { position: { x, y } } }
-      } = msg;
-      const origin = { x, y }
-      const canvas = drawToCanvas(width, height, 100, data);
-      const image = canvas2Image(canvas);
-      const map = { width, height, image, origin, resolution }
-      return this.setState({ map });
-    });
     // Bot
     this.unsubscribeBot = this.ros.bot(msg => {
       const { pose: { position: { x, y }, orientation } } = msg;
@@ -149,7 +153,7 @@ class Cleaning extends Component {
                   const quaternion = [orientation.x, orientation.y, orientation.z, orientation.w];
                   const [yaw] = qte(quaternion);
                   if (editable) return <POI key={index} x={x} y={y} r={width / 500} />
-                  return <Point key={index} x={x} y={y} r={width / 1000} yaw={yaw}/>
+                  return <Point key={index} x={x} y={y} r={width / 1000} yaw={yaw} />
                 })}
                 <Bot {...bot} r={width / 250} />
               </Map>

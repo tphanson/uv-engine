@@ -17,6 +17,8 @@ class ROS {
     });
   }
 
+  // DEPRECATED - now we load directly from bot's local files
+  // Keep this function for late use
   map = (callback = () => { }) => {
     const mapTopic = new Topic({
       ros: this.ros,

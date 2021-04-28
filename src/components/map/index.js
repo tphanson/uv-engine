@@ -1,12 +1,9 @@
 import React, { Component, Children, cloneElement, createRef } from 'react';
-import PropTypes from 'prop-types';
 import isEqual from 'react-fast-compare';
 import { Stage, Layer, Image, Arrow } from 'react-konva';
 
 import { withTheme } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
-
-import { flip } from 'helpers/pgm';
 
 
 class Map extends Component {
@@ -26,7 +23,6 @@ class Map extends Component {
 
   componentDidMount() {
     this.onLoadContainer();
-    this.onLoadMap();
   }
 
   componentDidUpdate(prevProps) {
@@ -68,25 +64,21 @@ class Map extends Component {
   }
 
   onLoadMap = () => {
-    const { map, onError } = this.props;
+    const { map } = this.props;
     const { wide } = this.state;
     if (!map || !map.width || !wide) return;
     const { width, height, image, origin, resolution } = map;
-    return flip(image).then(img => {
-      const ratio = width / height;
-      return this.setState({ ratio, origin, resolution }, () => {
-        // Prevent blurry map
-        const target = this.map.current;
-        if (!target) return;
-        const nativeCtx = target.getContext()._context;
-        nativeCtx.webkitImageSmoothingEnabled = false;
-        nativeCtx.mozImageSmoothingEnabled = false;
-        nativeCtx.imageSmoothingEnabled = false;
-        // Set image
-        return target.image(img);
-      });
-    }).catch(er => {
-      return onError(er);
+    const ratio = width / height;
+    return this.setState({ ratio, origin, resolution }, () => {
+      // Prevent blurry map
+      const target = this.map.current;
+      if (!target) return;
+      const nativeCtx = target.getContext()._context;
+      nativeCtx.webkitImageSmoothingEnabled = false;
+      nativeCtx.mozImageSmoothingEnabled = false;
+      nativeCtx.imageSmoothingEnabled = false;
+      // Set image
+      return target.image(image);
     });
   }
 
@@ -210,14 +202,6 @@ class Map extends Component {
       </Grid>
     </Grid>
   }
-}
-
-Map.defaultProps = {
-  onError: () => { },
-}
-
-Map.propTypes = {
-  onError: PropTypes.func,
 }
 
 export default withTheme(Map);

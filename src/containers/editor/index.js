@@ -27,9 +27,9 @@ import configs from 'configs';
 import utils from 'helpers/utils';
 import History from 'helpers/history';
 import ROS from 'helpers/ros';
-import { drawToCanvas, canvas2Image } from 'helpers/pgm';
+import PGM from 'helpers/pgm';
 import { setError } from 'modules/ui.reducer';
-import { getMap, savePath } from 'modules/bot.reducer';
+import { getMap, getCurrentMap, savePath } from 'modules/bot.reducer';
 
 
 const EMPTY_NODE = { orientation: {}, position: {}, metadata: {} }
@@ -69,7 +69,7 @@ class Editor extends Component {
   }
 
   componentWillUnmount() {
-    this.unsubscribeAll();
+    if (this.unsubscribeBot) this.unsubscribeBot();
     window.removeEventListener('keydown', this.onEsc);
   }
 
@@ -83,24 +83,38 @@ class Editor extends Component {
    */
 
   parseParams = () => {
-    const { match: { params: { botId, mapId, pathId } } } = this.props;
+    const { match: { params: { botId, mapId, pathId, current } } } = this.props;
     return {
       botId: decodeURIComponent(botId),
       mapId: decodeURIComponent(mapId),
-      pathId: decodeURIComponent(pathId)
+      pathId: decodeURIComponent(pathId),
+      current: JSON.parse(current)
     };
   }
 
-  unsubscribeAll = () => {
-    if (this.unsubscribeMap) this.unsubscribeMap();
-    if (this.unsubscribeBot) this.unsubscribeBot();
-  }
-
   loadData = (callback = () => { }) => {
-    const { getMap, setError } = this.props;
-    const { botId, mapId, pathId } = this.parseParams();
-    return getMap(botId, mapId, pathId).then(({ loaded, path }) => {
-      if (!loaded) return setError('Cannot load the desired map. The system will try to use the current map on Ohmni\'s local.');
+    const { getMap, getCurrentMap, setError } = this.props;
+    const { botId, mapId, pathId, current } = this.parseParams();
+    const _getMap = current ? getCurrentMap : getMap;
+
+    let map = null;
+    let info = null; // map info
+    let path = null;
+    return _getMap(botId, mapId, pathId).then(data => {
+      // Assign data
+      info = data.info;
+      path = data.path;
+      // Parse map
+      const pgm = new PGM(data.map);
+      return pgm.draw();
+    }).then(({ width, height, image }) => {
+      // Build map object
+      map = {
+        width, height, image,
+        origin: { x: info.origin[0], y: info.origin[1] },
+        resolution: info.resolution
+      }
+      // Parse path
       const { poses, metadata } = path;
       const trajectory = poses.map((pose, i) => {
         let data = { editable: false, time: 0, velocity: 0, light: 0 }
@@ -113,7 +127,7 @@ class Editor extends Component {
         });
         return { ...pose, metadata: data }
       });
-      return this.setState({ trajectory, path }, () => {
+      return this.setState({ map, trajectory, path }, () => {
         // Saving path for the first time
         if (!metadata) return this.onSave();
         // Editing History
@@ -131,20 +145,7 @@ class Editor extends Component {
 
   onRos = () => {
     // Unsubcribe all pre-events
-    this.unsubscribeAll();
-    // Map
-    this.unsubscribeMap = this.ros.map(msg => {
-      const {
-        data,
-        info: { width, height, resolution, origin: { position: { x, y } } }
-      } = msg;
-
-      const origin = { x, y }
-      const canvas = drawToCanvas(width, height, 100, data);
-      const image = canvas2Image(canvas);
-      const map = { width, height, image, origin, resolution }
-      return this.setState({ map });
-    });
+    if (this.unsubscribeBot) this.unsubscribeBot();
     // Bot
     this.unsubscribeBot = this.ros.bot(msg => {
       const { pose: { position: { x, y }, orientation } } = msg;
@@ -296,6 +297,7 @@ class Editor extends Component {
 
   onTest = () => {
     const { setError } = this.props;
+    // eslint-disable-next-line
     let { segment: [start, stop, startSeg, stopSeg] } = this.state;
     startSeg = Math.max(startSeg, 0);
     stopSeg = Math.max(stopSeg, 0);
@@ -443,7 +445,7 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = dispatch => bindActionCreators({
   setError,
-  getMap, savePath,
+  getMap, getCurrentMap, savePath,
 }, dispatch);
 
 export default withRouter(connect(

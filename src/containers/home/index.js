@@ -30,6 +30,7 @@ class Home extends Component {
       botId: '',
       localMaps: [],
       groupedMaps: [],
+      currentMapId: '',
       mapId: '',
       pathId: ''
     }
@@ -42,16 +43,16 @@ class Home extends Component {
   loadData = () => {
     const { getBotInfo, getCurrentMap, getMaps, setError } = this.props;
     let botId = '';
-    let mapId = '';
+    let currentMapId = '';
     return getBotInfo().then(({ botId: re }) => {
       botId = re;
       return getCurrentMap();
     }).then(({ mapId: re }) => {
-      mapId = re;
+      currentMapId = re;
       return getMaps(botId);
     }).then(data => {
-      return this.setState({ ...data, botId }, () => {
-        const pseudoEvent = { target: { value: mapId } }
+      return this.setState({ ...data, botId, currentMapId }, () => {
+        const pseudoEvent = { target: { value: currentMapId } }
         return this.onPlan(pseudoEvent);
       });
     }).catch(er => {
@@ -68,14 +69,14 @@ class Home extends Component {
     return this.setState({ mapId, pathId });
   }
 
-  encodeParams = (botId, mapId, pathId) => {
+  encodeParams = (botId, currentMapId, mapId, pathId) => {
     if (!botId || !mapId || !pathId) return '#';
-    return `/editor/${encodeURIComponent(botId)}/${encodeURIComponent(mapId)}/${encodeURIComponent(pathId)}`;
+    return `/editor/${encodeURIComponent(botId)}/${encodeURIComponent(mapId)}/${encodeURIComponent(pathId)}/${currentMapId === mapId}`;
   }
 
   render() {
     const { classes } = this.props;
-    const { botId, localMaps, groupedMaps, mapId, pathId } = this.state;
+    const { botId, localMaps, groupedMaps, currentMapId, mapId, pathId } = this.state;
 
     return <Grid container spacing={2}>
       <Grid item xs={12}>
@@ -114,7 +115,7 @@ class Home extends Component {
               variant="contained"
               color="primary"
               component={RouteLink}
-              to={this.encodeParams(botId, mapId, pathId)}
+              to={this.encodeParams(botId, currentMapId, mapId, pathId)}
               startIcon={<EditLocationRounded style={{ color: '#ffffff' }} />}
             >
               <Typography style={{ color: '#ffffff' }} variant="body2">Edit map</Typography>

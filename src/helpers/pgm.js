@@ -10,7 +10,7 @@ export function manipulatePixels(ctx, width, height, maxValue, buffer) {
   let imageData = ctx.createImageData(width, height);
   for (let i = 0; i < imageData.data.length; i += 4) {
     const offset = Number(i / 4);
-    const value = Number(255 - buffer[offset] / maxValue * 255); // Inverse color
+    const value = Number(buffer[offset] / maxValue * 255);
     imageData.data[i] = value;
     imageData.data[i + 1] = value;
     imageData.data[i + 2] = value;
@@ -91,7 +91,7 @@ class PGM {
         const data = this._validateData(re);
         if (!data) return reject('Invalid data');
         const { format, width, height, maxValue, buffer } = data;
-        if (format !== 'P5') return reject('Unsupported format. Now we only support P5 format.');
+        if (format !== 'P5') return reject('Unsupported format. Now we only support P5-PGM format.');
         if (buffer.length !== width * height) return reject('Unmatched data length');
         const canvas = drawToCanvas(width, height, maxValue, buffer);
         const image = canvas2Image(canvas);
