@@ -1,5 +1,6 @@
 import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
+import isEqual from 'react-fast-compare';
 
 import { withStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
@@ -34,6 +35,32 @@ const MAX_VELOCITY = 3;
 const MAX_LIGHT = 10000;
 
 class Action extends Component {
+  constructor() {
+    super();
+
+    this.state = {
+      time: 0,
+      velocity: 0,
+      light: 0,
+    }
+  }
+
+  componentDidMount() {
+    const { time, velocity, light } = this.props;
+    return this.setState({ time, velocity, light });
+  }
+
+  componentDidUpdate(prevProps) {
+    const { time: prevTime, velocity: prevVelocity, light: prevLight } = prevProps;
+    const { time, velocity, light } = this.props;
+    if (!isEqual(prevTime, time)) this.setState({ time });
+    if (!isEqual(prevVelocity, velocity)) this.setState({ velocity });
+    if (!isEqual(prevLight, light)) this.setState({ light });
+  }
+
+  isFloat = (value) => {
+    return parseFloat(value).toString() === value;
+  }
 
   onEditable = (e) => {
     const editable = e.target.checked || false;
@@ -41,18 +68,24 @@ class Action extends Component {
   }
 
   onTime = (e) => {
+    if (!this.isFloat(e.target.value))
+      return this.setState({ time: e.target.value });
     const time = parseFloat(e.target.value) || 0;
     return this.props.onTime(time);
   }
 
   onVelocity = (e) => {
+    if (!this.isFloat(e.target.value))
+      return this.setState({ velocity: e.target.value });
     const velocity = parseFloat(e.target.value) || 0;
     return this.props.onVelocity(velocity);
   }
 
   onLightAmptitude = (e) => {
+    if (!this.isFloat(e.target.value))
+      return this.setState({ light: e.target.value });
     const light = parseFloat(e.target.value) || 0;
-    return this.props.onVelocity(light);
+    return this.props.onLightAmptitude(light);
   }
 
   onClose = () => {
@@ -63,7 +96,8 @@ class Action extends Component {
 
   render() {
     const { classes } = this.props;
-    const { anchorEl, editable, x, y, time, velocity, light } = this.props;
+    const { anchorEl, editable, x, y } = this.props;
+    const { time, velocity, light } = this.state;
 
     return <Popper
       open={anchorEl.open}

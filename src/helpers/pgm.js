@@ -79,7 +79,7 @@ class PGM {
     if (!width || !height) return false;
     const maxValue = parseInt(range);
     if (!maxValue) return false;
-    const buffer = Buffer.from(value, 'ascii');
+    const buffer = Buffer.from(value, 'binary');
     return { format, width, height, maxValue, buffer };
   }
 
