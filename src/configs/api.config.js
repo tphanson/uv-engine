@@ -13,8 +13,8 @@ configs.development = {
     base: 'https://api-branch.ohmnilabs.com',
   },
   localBot: {
-    base: 'http://192.168.123.13:3001',
-    rosbridge: 'ws://192.168.123.13:9090',
+    base: 'http://192.168.123.38:3001',
+    rosbridge: 'ws://192.168.123.38:9090',
   }
 }
 

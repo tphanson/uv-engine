@@ -138,6 +138,7 @@ class Editor extends Component {
         data,
         info: { width, height, resolution, origin: { position: { x, y } } }
       } = msg;
+
       const origin = { x, y }
       const canvas = drawToCanvas(width, height, 100, data);
       const image = canvas2Image(canvas);
@@ -218,13 +219,11 @@ class Editor extends Component {
   parseHighlight = () => {
     let { trajectory, segment: [start, stop, startSeg, stopSeg] } = this.state;
     if (start < 0 || stop < 0) return;
-    let passed = false;
+    let passed = -1;
     trajectory.forEach(({ metadata }, index) => {
-      if (metadata.editable) {
-        if (!passed) startSeg = startSeg + 1;
-        else stopSeg = startSeg + 1;
-      }
-      if (index >= start) passed = true;
+      if (metadata.editable) passed = passed + 1;
+      if (start === index) startSeg = passed;
+      if (stop === index) stopSeg = passed;
     });
     return this.setState({ segment: [start, stop, startSeg, stopSeg] });
   }
@@ -297,8 +296,9 @@ class Editor extends Component {
 
   onTest = () => {
     const { setError } = this.props;
-    const { segment: [start, stop, startSeg, stopSeg] } = this.state;
-    console.log(start, stop, startSeg, stopSeg)
+    let { segment: [start, stop, startSeg, stopSeg] } = this.state;
+    startSeg = Math.max(startSeg, 0);
+    stopSeg = Math.max(stopSeg, 0);
     return this.setState({ loading: true }, () => {
       return this.ros.cleaning(true, startSeg, stopSeg, 1, (er, re) => {
         return this.setState({ loading: false }, () => {

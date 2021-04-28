@@ -56,6 +56,11 @@ class Save extends Component {
     return this.setState({ anchorEl: null });
   }
 
+  onCancel = () => {
+    const { onCancel } = this.props;
+    return this.setState({ timer: 0 }, onCancel);
+  }
+
   startTimer = () => {
     this.stopTimer();
     const { loading } = this.props;
@@ -76,7 +81,7 @@ class Save extends Component {
     // const { classes } = this.props;
     const {
       loading, disabled,
-      onCancel, onSave, onTest, onSaveAndTest
+      onSave, onTest, onSaveAndTest
     } = this.props;
     const { anchorEl, timer } = this.state;
 
@@ -85,7 +90,7 @@ class Save extends Component {
         <Button
           variant="contained"
           color={loading ? 'default' : 'primary'}
-          onClick={loading ? onCancel : onSave}
+          onClick={loading ? this.onCancel : onSave}
           startIcon={loading ? <CircularProgress size={17} /> : <SaveRounded />}
         >
           <Typography>{loading ? `Cancel (${utils.prettySeconds(timer)})` : 'Save'}</Typography>

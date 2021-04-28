@@ -111,7 +111,6 @@ export const getMap = (botId, mapId, pathId) => {
           dispatch({ type: GET_MAP_FAIL, reason: er });
           return reject(er);
         }
-
         const { api: { localBot: { base } } } = configs;
         return api.get(base + `/map`, { mapId, location, pathId })
       }).then(({ data }) => {
