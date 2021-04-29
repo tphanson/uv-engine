@@ -78,8 +78,46 @@ First of all, users need to load the desired map to edit. The list of maps is fe
 
 With the list of maps, users can choose a map to edit. When the user choose one, the `getMap` (in `bot.reducer.js`) will be called to notify the servers to publish the map via map topic.
 
-### Edit maps
+**Legacy.** Back in the day, we listened the map data from a ROS topic which you could find it's vestige in `ros.js`. However, it was noticeably slow. We decided to migrate the map to local and load it from bot. The speed is improved a lot.
+
+**Mirror problem.** If you load from topic, the map will be horizontally mirrored.
 
 
+### Edit maps (path)
+
+Currently, the path is the only component we allows to edit. We utilize Konva to render and compute tranformation of components inside the map. There 2 main things we need to highlight here:
+
+**Coordinate.** In canvas the root is top-left but it's bottom-left in ROS-based data.
+
+**Zoom.** The tool also has ability to zoom in/out the map then the components' position should be relative values.
+
+These remarks above all lead to a transformation. Therefore, a re-computation of transform is needed for every single components in the map. `transform` and `inverseTransform` will eliminate the pain of computation.
+
+```
+transform = ({ x, y }) => {
+  const { map } = this.props;
+  const { wide, ratio } = this.state;
+  if (!map || !map.width || !wide) return { x: 0, y: 0 }
+  const { width, height, origin, resolution } = map;
+  return {
+    x: ((x - origin.x) * wide) / (resolution * width),
+    y: ((resolution * height - y + origin.y) * (wide / ratio)) / (resolution * height)
+  }
+}
+inverseTransform = ({ x, y }) => {
+  const { map } = this.props;
+  const { wide, ratio } = this.state;
+  if (!map || !map.width || !wide) return { x: 0, y: 0 }
+  const { width, height, origin, resolution } = map;
+  return {
+    x: x * (resolution * width) / wide + origin.x,
+    y: origin.y + (resolution * height) - y * (resolution * height) / (wide / ratio)
+  }
+}
+```
+
+`transform` let the children can compute its relative position compared to the map coordinate. `inverseTransform` do the opposite, computing the relative position to the absolute position of children. These function will transfer to children by the map as props.
 
 ## The monitor
+
+This section is pretty simple, it reuses several components in the editor section but removes editability. And running full path is default in monitoring mode.

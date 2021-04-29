@@ -123,7 +123,7 @@ class Save extends Component {
               <Typography style={{ fontSize: 10 }}>Press Esc to cancel.</Typography>
             </Fragment>} />
           </ListItem>
-          <ListItem button onClick={onSaveAndTest} disabled>
+          <ListItem button onClick={onSaveAndTest}>
             <ListItemIcon>
               <FlightTakeoffRounded />
             </ListItemIcon>

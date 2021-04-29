@@ -44,15 +44,14 @@ class POI extends Component {
 
   onStyles = () => {
     const { theme, highlight } = this.props;
-    let styles = {
-      fill: theme.palette.primary.main,
-      shadowColor: theme.palette.primary.main,
+    const styles = {
+      fill: highlight ? 'yellow' : theme.palette.primary.main,
+      shadowColor: highlight ? 'yellow' : theme.palette.primary.main,
       shadowOffsetX: 0,
       shadowOffsetY: 6,
       shadowBlur: 10,
       shadowOpacity: 0.9,
     }
-    if (highlight) styles = { ...styles, fill: 'yellow' }
     return styles;
   }
 
