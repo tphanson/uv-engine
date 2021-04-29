@@ -71,7 +71,8 @@ class Save extends Component {
   }
 
   stopTimer = () => {
-    if (this.timer) return clearInterval(this.timer);
+    if (this.timer) clearInterval(this.timer);
+    return this.setState({ timer: 0 });
   }
 
   /**
